@@ -1,5 +1,6 @@
-# neon-inv-data
-Data processing of NEON invasive species data
+# NEON invasive species data
+
+Data processing of NEON invasive species data -- NEON Summit 2019
 
 zotero group:
 
