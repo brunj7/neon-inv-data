@@ -78,7 +78,7 @@ ggplot(vegan_friendly_div,
   #theme(legend.position = "none") +
   facet_wrap(~plotID) +
   theme_pubr() +
-  ggsave("/home/a/Desktop/quickplot.png")
+  ggsave("fig/quickplot.png")
 
 ggplot(n_i,
        aes(x = endDate, y=rel_cover, color = nativeStatusCode)) +
@@ -86,7 +86,7 @@ ggplot(n_i,
   #theme(legend.position = "none") +
   facet_wrap(~plotID) +
   theme_pubr() +
-  ggsave("/home/a/Desktop/quickplot.png")
+  ggsave("fig/quickplot2.png")
 
 
 sact <- list()
