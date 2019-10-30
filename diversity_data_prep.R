@@ -63,7 +63,24 @@ vegan_friendly_div <- rbind(cover, traces) %>%
   ungroup()
 
 vegan_friendly_div$shannon = diversity(vegan_friendly_div[5:ncol(vegan_friendly_div)])
+vegan_friendly_div$nspp = specnumber(vegan_friendly_div[5:ncol(vegan_friendly_div)])
 
+n_v_i_div <- vegan_friendly_div %>%
+  dplyr::select(plotID, bout_year, endDate, nativeStatusCode, nspp) %>%
+  pivot_wider(names_from = nativeStatusCode,
+               values_from = nspp) %>%
+  mutate(site = str_sub(plotID, 1,4))
+
+ggplot(n_v_i_div, aes(x=N, y=I, color = site)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ggtitle("Native vs. Exotic Species Richness")+
+  xlab("Native Species") +
+  ylab("Exotic Species") +
+  theme_pubr()# +
+ # facet_wrap(~site, scales = "free") 
+ 
+glm(I ~ N, data = filter(n_v_i_div, site == "SRER"), family = "poisson") %>% summary
 
 for(i in vegan_friendly_div$bout_year){
 plot(specaccum(comm = vegan_friendly_div %>%
