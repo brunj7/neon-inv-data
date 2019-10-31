@@ -1,4 +1,4 @@
-source(diversity_data_prep.R)
+source("data/diversity_data_prep.R")
 
 
 
