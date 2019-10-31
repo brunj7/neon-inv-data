@@ -13,8 +13,9 @@ vegan_friendly_div %>%
   ggtitle("Native vs. Exotic Species Richness")+
   xlab("Native Species") +
   ylab("Exotic Species") +
-  theme_pubr()# +
+  theme_pubr() +
 # facet_wrap(~site, scales = "free") 
+  ggsave("draft_figures/n_vs_e_nspp.png")
 
 glm(I ~ N*site, data = n_v_i_div, family = "poisson") %>% summary
 
@@ -29,4 +30,5 @@ vegan_friendly_div %>%
   ggtitle("Native vs. Exotic Shannon Diversity")+
   xlab("Native Species") +
   ylab("Exotic Species") +
-  theme_pubr()
+  theme_pubr() +
+  ggsave("draft_figures/n_vs_e_shannon.png")
