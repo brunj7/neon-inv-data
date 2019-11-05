@@ -10,28 +10,28 @@ library(vegan)
 path_out <- "Data_merged"
 file_out_charact <- "soil_charact_chem_phys.csv"
 
-
+neon_sites <- c("SRER", "ONAQ", "MOAB")
 
 ## Data import ----
 
 # soil chemical properties (Distributed initial characterization)
-soil_chem_charact <- loadByProduct(dpID = "DP1.10008.001", site = c("SRER", "ONAQ", "MOAB"), 
+soil_chem_charact <- loadByProduct(dpID = "DP1.10008.001", site = neon_sites, 
               check.size = F)
 
 # Soil physical properties (Distributed initial characterization)
-soil_physical <- loadByProduct(dpID = "DP1.10047.001", site = c("SRER", "ONAQ", "MOAB"), 
+soil_physical <- loadByProduct(dpID = "DP1.10047.001", site = neon_sites, 
                                check.size = F)
 
 # Soil chemical properties (Distributed periodic)
-soil_chem_periodic <- loadByProduct(dpID = "DP1.10078.001", site = c("SRER", "ONAQ", "MOAB"), 
+soil_chem_periodic <- loadByProduct(dpID = "DP1.10078.001", site = neon_sites, 
                                 check.size = F)
 
 # Soil inorganic nitrogen pools and transformations
-soil_chem_nitro <- loadByProduct(dpID = "DP1.10080.001", site = c("SRER", "ONAQ", "MOAB"), 
+soil_chem_nitro <- loadByProduct(dpID = "DP1.10080.001", site = neon_sites, 
                                     check.size = F)
 
 # Soil physical properties (Distributed periodic)
-soil_physical_periodic <- loadByProduct(dpID = "DP1.10086.001", site = c("SRER", "ONAQ", "MOAB"), 
+soil_physical_periodic <- loadByProduct(dpID = "DP1.10086.001", site = neon_sites, 
                                check.size = F)
 
 
