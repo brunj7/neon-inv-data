@@ -68,32 +68,106 @@ soil_charact_chem_phys <- soil_chem_charact$spc_biogeochem %>%
   full_join(soil_physical$spc_particlesize, 
             by=c("namedLocation","domainID","siteID", "plotID", "horizonID", "horizonName"))
 
+#looks like single dates of samples at each horizon
+ggplot(soil_chem_charact$spc_biogeochem, aes(x=collectDate, y=ctonRatio,
+                                             color = horizonName)) +
+  geom_point() +
+  facet_wrap(~plotID, scales="free_y")
+
+# maybe taking only the top layer is a good idea?
+ggplot(soil_physical$spc_particlesize %>% filter(biogeoTopDepth == 0),
+       aes(x=collectDate, y=sandTotal,
+                                           color = horizonName)) +
+  geom_point() +
+  facet_wrap(~plotID)
+
 # Write the merged data to disk
 dir.create(path_out, showWarnings = FALSE)
 write_csv(soil_charact_chem_phys, file.path(path_out, file_out_charact))
 
 ## nitrogen and soil moisture data ----
+# basically mineral N and soil moisture
 
-nitro_sms <- soil_chem_nitro$ntr_externalLab %>%
-  dplyr::select(plotID, date_n = collectDate, kclAmmoniumNConc, 
+nitro <- soil_chem_nitro$ntr_externalLab %>%
+  dplyr::select(plotID, collectDate, kclAmmoniumNConc, 
                 kclNitrateNitriteNConc) %>%
-  left_join(soil_chem_nitro$sls_soilMoisture %>%
-              dplyr::select(plotID, date_sms = collectDate, 
-                            soilMoisture, dryMassFraction)) %>%
-  mutate(date_n = str_sub(date_n,1,10) %>% as.Date(),
-         date_sms = str_sub(date_sms,1,10) %>% as.Date());glimpse(nitro_sms)
+  mutate(collectDate = str_sub(collectDate,1,10) %>% as.Date(),
+         kclAmmoniumNConc = ifelse(is.na(kclAmmoniumNConc), 0,kclAmmoniumNConc),
+         kclNitrateNitriteNConc = ifelse(is.na(kclNitrateNitriteNConc), 0,
+                                         kclNitrateNitriteNConc),
+         mineral_n_total = kclNitrateNitriteNConc +kclAmmoniumNConc) %>%
+  dplyr::select(plotID, collectDate, mineral_n_total)
 
-ggplot(nitro_sms, aes(x=date_sms, y=soilMoisture)) +
-  geom_point() +
-  facet_wrap(~plotID)
+sms <- soil_chem_nitro$sls_soilMoisture %>%
+  dplyr::select(plotID, collectDate, 
+                soilMoisture) %>%
+  mutate(collectDate = str_sub(collectDate,1,10) %>% as.Date())
+
+ggplot() +
+  geom_point(data = nitro %>% filter(plotID != ""), 
+             aes(x = collectDate, y=mineral_n_total), 
+             color = "red", shape = 21) +
+  geom_point(data = sms, aes(x=collectDate, y=soilMoisture),
+             color = "blue", shape = 22) +
+  facet_wrap(~plotID, scales = "free_y")
+
+## soil physical periodic ----
+# seems like soil moisture and ph are the main pieces of info here
 
 soil_moisture <- soil_physical_periodic$sls_soilMoisture %>%
   dplyr::select(soilMoisture, collectDate, plotID) %>%
   mutate(collectDate = str_sub(collectDate,1,10) %>% as.Date());glimpse(soil_moisture)
 
+soil_ph <- soil_physical_periodic$sls_soilpH %>%
+  dplyr::select(plotID, collectDate, soilInWaterpH, soilInCaClpH) %>%
+  mutate(collectDate = str_sub(collectDate,1,10) %>% as.Date());glimpse(soil_ph)
+
+
 ggplot(soil_moisture, aes(x=collectDate, y=soilMoisture)) +
-  geom_point() +
+  geom_boxplot(aes(group = collectDate)) +
+  facet_wrap(~plotID, scales = "free_y")
+
+ggplot(soil_ph, aes(x=collectDate)) +
+  geom_boxplot(aes(y= soilInWaterpH,group = collectDate)) +
   facet_wrap(~plotID)
+
+ggplot(soil_ph, aes(x=collectDate)) +
+  geom_boxplot(aes(y= soilInCaClpH,group = collectDate)) +
+  facet_wrap(~plotID)
+
+ggplot(soil_ph, aes(x=soilInWaterpH, y=soilInCaClpH)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0) +
+  annotate("text", label = "1:1 line", x=9.2,y=9)
+
+
+## soil chem periodic ---
+# they did a great job of messing up this table luckily it's not too hard to fix
+
+soil_n <- soil_chem_periodic$sls_soilChemistry %>%
+  dplyr::select(plotID, collectDate, nitrogenPercent, cnSampleID) %>%
+  na.omit() %>%
+  mutate(collectDate = str_sub(collectDate,1,10) %>% as.Date())
+
+soil_c <- soil_chem_periodic$sls_soilChemistry %>%
+  dplyr::select(plotID, collectDate, organicCPercent,cnSampleID) %>%
+  na.omit()%>%
+  mutate(collectDate = str_sub(collectDate,1,10) %>% as.Date())
+
+soil_cn <- left_join(soil_n, soil_c, 
+                     by = c("plotID", "collectDate", "cnSampleID")) %>%
+  mutate(soil_cn = organicCPercent/nitrogenPercent)
+
+ggplot(soil_cn) +
+  geom_point(aes(x=collectDate, y=soil_cn),
+             color = "red", shape = 21)+
+  facet_wrap(~plotID)
+
+ggplot(soil_cn) +
+  geom_point(aes(x=collectDate, y=nitrogenPercent)) 
+
+ggplot(soil_cn) +
+  geom_point(aes(x=collectDate, y=organicCPercent))
 # note, 
 ## Joining perodic data ----
 
