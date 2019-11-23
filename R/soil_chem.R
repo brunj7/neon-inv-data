@@ -29,6 +29,7 @@ soil_chem_periodic <- loadByProduct(dpID = "DP1.10078.001", site = neon_sites,
 # Soil inorganic nitrogen pools and transformations
 soil_chem_nitro <- loadByProduct(dpID = "DP1.10080.001", site = neon_sites, 
                                     check.size = F)
+  
 
 # Soil physical properties (Distributed periodic)
 soil_physical_periodic <- loadByProduct(dpID = "DP1.10086.001", site = neon_sites, 
@@ -71,8 +72,29 @@ soil_charact_chem_phys <- soil_chem_charact$spc_biogeochem %>%
 dir.create(path_out, showWarnings = FALSE)
 write_csv(soil_charact_chem_phys, file.path(path_out, file_out_charact))
 
+## nitrogen and soil moisture data ----
 
+nitro_sms <- soil_chem_nitro$ntr_externalLab %>%
+  dplyr::select(plotID, date_n = collectDate, kclAmmoniumNConc, 
+                kclNitrateNitriteNConc) %>%
+  left_join(soil_chem_nitro$sls_soilMoisture %>%
+              dplyr::select(plotID, date_sms = collectDate, 
+                            soilMoisture, dryMassFraction)) %>%
+  mutate(date_n = str_sub(date_n,1,10) %>% as.Date(),
+         date_sms = str_sub(date_sms,1,10) %>% as.Date());glimpse(nitro_sms)
 
+ggplot(nitro_sms, aes(x=date_sms, y=soilMoisture)) +
+  geom_point() +
+  facet_wrap(~plotID)
+
+soil_moisture <- soil_physical_periodic$sls_soilMoisture %>%
+  dplyr::select(soilMoisture, collectDate, plotID) %>%
+  mutate(collectDate = str_sub(collectDate,1,10) %>% as.Date());glimpse(soil_moisture)
+
+ggplot(soil_moisture, aes(x=collectDate, y=soilMoisture)) +
+  geom_point() +
+  facet_wrap(~plotID)
+# note, 
 ## Joining perodic data ----
 
 
