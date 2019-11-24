@@ -1,5 +1,10 @@
+## modelling native vs exotic diversity
+## 
+
 source("R/diversity_data_prep.R")
 library(lmerTest)
+
+## plotting number of species then doing a glmmm ----
 
 vegan_friendly_div %>%
   dplyr::select(plotID, bout_year, endDate, nativeStatusCode, nspp) %>%
@@ -24,6 +29,7 @@ vegan_friendly_div %>%
   lme4::glmer(I ~ N + (1|site), data = ., family = "poisson") %>% 
   summary
 
+## plotting shannon diversity then doing an lmm -----
 vegan_friendly_div %>%
   dplyr::select(plotID, bout_year, endDate, nativeStatusCode, shannon) %>%
   pivot_wider(names_from = nativeStatusCode,
@@ -38,10 +44,6 @@ vegan_friendly_div %>%
   theme_pubr() +
   ggsave("draft_figures/n_vs_e_shannon.png")
 
-# note: perhaps if we adjust for the total number of exotic species (i.e. the
-# level of invasion), we wouldn't have to group the
-
-
 vegan_friendly_div %>%
   dplyr::select(plotID, bout_year, endDate, nativeStatusCode, shannon) %>%
   pivot_wider(names_from = nativeStatusCode,
@@ -50,6 +52,7 @@ vegan_friendly_div %>%
   lmerTest::lmer(I~N + (1|site), data=.) %>%
   summary
 
+# trying to do what someone wrote in the google doc -----
 # rescaling needed
 vegan_friendly_div %>%
   dplyr::select(plotID, bout_year, endDate, nativeStatusCode, shannon) %>%
