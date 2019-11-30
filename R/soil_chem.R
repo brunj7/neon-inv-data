@@ -184,7 +184,9 @@ sms <- soil_chem_nitro$sls_soilMoisture %>%
                 soilMoisture, sampleID) %>%
   mutate(collectDate = str_sub(collectDate,1,10) %>% as.Date())
 
-nitro$plotID %>% unique== sms$plotID %>% unique
+# checking to see if the nitrogen and soil moisture are all th esame plots 
+# in the same order
+nitro$plotID %>% unique == sms$plotID %>% unique
 
 ggplot() +
   geom_point(data = nitro %>% filter(plotID != ""), 
@@ -209,7 +211,7 @@ soil_ph <- soil_physical_periodic$sls_soilpH %>%
   dplyr::select(plotID, collectDate, soilInWaterpH, soilInCaClpH,sampleID) %>%
   mutate(collectDate = str_sub(collectDate,1,10) %>% as.Date());glimpse(soil_ph)
 
-
+# visualizing 
 ggplot(soil_moisture, aes(x=collectDate, y=soilMoisture)) +
   geom_boxplot(aes(group = collectDate)) +
   facet_wrap(~plotID, scales = "free_y")
@@ -231,8 +233,9 @@ soil_phys <- left_join(soil_moisture, soil_ph, by = c("plotID", "collectDate", "
 write_csv(soil_phys, file.path(path_out, "soil_phys_periodic_w.csv"))
 
 
-## soil chem periodic ---
-# they did a great job of messing up this table luckily it's not too hard to fix
+## soil chem periodic --- # it's mainly total n and organic C. 
+# they did a great job of messing up this table. 
+# luckily it's not too hard to fix...
 
 soil_n <- soil_chem_periodic$sls_soilChemistry %>%
   dplyr::select(plotID, collectDate, nitrogenPercent, cnSampleID) %>%
