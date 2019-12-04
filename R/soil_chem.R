@@ -2,7 +2,7 @@ library(neonUtilities)
 # library(sf)
 library(tidyverse)
 library(ggpubr)
-library(vegan)
+#library(vegan)
 
 ## adam here - I added a bunch of stuff and also data visualization just to kind
 ## of understand what the data looks like as we work through the initial 
@@ -10,6 +10,7 @@ library(vegan)
 
 
 ## Constants ----
+options(stringsAsFactors = FALSE)
 path_out <- "Data_merged"
 dir.create(path_out, showWarnings = FALSE)
 file_out_charact <- "soil_charact_chem_phys.csv"
@@ -201,7 +202,8 @@ write_csv(soil_nitro, file.path(path_out, "soil_nitro_w.csv"))
 
 
 ## soil physical periodic ----
-# seems like soil moisture and ph are the main pieces of info here
+# seems like soil moisture and ph are the main pieces of info here, and they
+# were collected in triplicate
 
 soil_moisture <- soil_physical_periodic$sls_soilMoisture %>%
   dplyr::select(soilMoisture, collectDate, plotID, sampleID) %>%
@@ -214,7 +216,7 @@ soil_ph <- soil_physical_periodic$sls_soilpH %>%
 # visualizing 
 ggplot(soil_moisture, aes(x=collectDate, y=soilMoisture)) +
   geom_boxplot(aes(group = collectDate)) +
-  facet_wrap(~plotID, scales = "free_y")
+  facet_wrap(~plotID)
 
 ggplot(soil_ph, aes(x=collectDate)) +
   geom_boxplot(aes(y= soilInWaterpH,group = collectDate)) +
@@ -231,7 +233,7 @@ ggplot(soil_ph, aes(x=soilInWaterpH, y=soilInCaClpH)) +
 
 soil_phys <- left_join(soil_moisture, soil_ph, by = c("plotID", "collectDate", "sampleID"))
 write_csv(soil_phys, file.path(path_out, "soil_phys_periodic_w.csv"))
-
+unique(soil_phys$collectDate)
 
 ## soil chem periodic --- # it's mainly total n and organic C. 
 # This one comes out of the box a little goofed up bit it's easy to fix
@@ -259,8 +261,13 @@ ggplot(soil_cn) +
 ggplot(soil_cn) +
   geom_point(aes(x=organicCPercent, y=nitrogenPercent)) 
 
+# looks like the collection dates are pretty well coordinated
+# problem - nothing has been collected since 2017
 ggplot(soil_cn) +
-  geom_point(aes(x=collectDate, y=organicCPercent))
+  geom_point(aes(x=collectDate, y=organicCPercent)) +
+  facet_wrap(~str_sub(plotID,1,4), ncol=1)
+unique(soil_cn$collectDate) %>% sort
+
 # note, 
 ## Joining perodic data ----
 

@@ -4,6 +4,8 @@ library(ggpubr)
 library(vegan)
 
 options(stringsAsFactors = FALSE)
+
+
 loadByProduct(dpID = "DP1.10058.001", 
               site = c("SRER", "ONAQ", "MOAB", "JORN"), 
               check.size = F) -> x
@@ -13,15 +15,19 @@ loadByProduct(dpID = "DP1.10058.001",
 
 # Initial ingest ---------------------------------------------------------------
 # 1m2 cover is aggregated by sampling bout and plot
-cover <- x$div_1m2Data %>%
+cover <- x$div_1m2Data %>% 
   mutate(endDate = as.Date(endDate)) %>%
   dplyr::filter(divDataType == "plantSpecies") %>%
   mutate(bout_year = str_c(str_sub(endDate,1,4),"_", boutNumber))%>%
   group_by(plotID, taxonID, bout_year) %>%
   summarise(cover = sum(percentCover, na.rm=TRUE)/8,
             nativeStatusCode = first(nativeStatusCode),
-            endDate = first(endDate)) %>%
-  ungroup() 
+            endDate = first(endDate),
+            family = first(family)) %>%
+  ungroup()  %>%
+  filter(taxonID != "")
+
+cover %>% filter(nativeStatusCode == "UNK")
 
 # 10m2,100m2 are given 0.5 (we can change later)
 traces <- x$div_10m2Data100m2Data %>%
@@ -47,7 +53,8 @@ n_i <- rbind(cover, traces)%>%
   ungroup() %>%
   mutate(rel_cover = cover/total_cover) %>%
   #filter(nativeStatusCode == "N" | nativeStatusCode == "I")%>%
-  ungroup()
+  ungroup() %>%
+  filter(nativeStatusCode != "")
   
 n_i_cover <- n_i %>%
   filter(nativeStatusCode != "" &
