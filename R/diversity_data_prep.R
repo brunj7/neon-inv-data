@@ -41,8 +41,13 @@ traces <- x$div_10m2Data100m2Data %>%
             family = first(family)) %>%
   ungroup() 
 
-unks <- rbind(cover, traces) %>% filter(nativeStatusCode == "UNK") %>% select(taxonID) %>% as.vector() %>% unique()
-
+unks <- rbind(cover, traces) %>% 
+  filter(nativeStatusCode == "UNK") %>% 
+  select(taxonID, plotID, family) %>%
+  mutate(site = str_sub(plotID, 1,4)) %>%
+  group_by(site, taxonID) %>%
+  summarise(family = first(family)) %>%
+  ungroup()
 
 # calculating various indexes at plot level at each timestep -------------------
 # native vs invasive cover and relative cover
