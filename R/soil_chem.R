@@ -5,8 +5,8 @@ library(ggpubr)
 library(vegan)
 
 ## adam here - I added a bunch of stuff and also data visualization just to kind
-## of understand what the data looks like as we struggle through the initial 
-## stages.
+## of understand what the data looks like as we work through the initial 
+## stages of data wrangling.
 
 
 ## Constants ----
