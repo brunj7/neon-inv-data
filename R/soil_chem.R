@@ -234,8 +234,7 @@ write_csv(soil_phys, file.path(path_out, "soil_phys_periodic_w.csv"))
 
 
 ## soil chem periodic --- # it's mainly total n and organic C. 
-# they did a great job of messing up this table. 
-# luckily it's not too hard to fix...
+# This one comes out of the box a little goofed up bit it's easy to fix
 
 soil_n <- soil_chem_periodic$sls_soilChemistry %>%
   dplyr::select(plotID, collectDate, nitrogenPercent, cnSampleID) %>%
