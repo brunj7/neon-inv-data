@@ -61,3 +61,62 @@ vegan_friendly_div %>%
   mutate(site = str_sub(plotID, 1,4)) %>%
   lmerTest::lmer(I~N*site*endDate + (1|plotID), data=.) %>%
   summary
+
+
+# basic AF relating it to env variables
+
+source("R/soil_chem.R")
+
+soil_chem_byplot<- soil_cn %>%
+  group_by(plotID) %>%
+  summarise(nitrogen = mean(nitrogenPercent),
+            carbon = mean(organicCPercent),
+            CN = mean(soil_cn))
+
+vegan_friendly_div %>%
+  dplyr::select(plotID, bout_year, endDate, nativeStatusCode, shannon) %>%
+  # pivot_wider(names_from = nativeStatusCode,
+  #             values_from = shannon) %>%
+  left_join(soil_chem_byplot )%>%
+  left_join(n_i_rel_cover) %>%
+  mutate(site = str_sub(plotID, 1,4))  %>%
+  ggplot(aes(x=endDate, y=shannon)) +
+  geom_point(aes(color = nativeStatusCode)) +
+  geom_line(alpha = 0.2,aes(color = nativeStatusCode,group=paste(plotID, nativeStatusCode)))+
+  facet_wrap(~site, scales="free_y")+
+  geom_smooth(show.legend = F, aes(color = nativeStatusCode), se=F) +
+  theme_pubr()
+
+# so clearly there can't be 200% relative cover so something's messed up with 
+# relative exotic cover
+vegan_friendly_div %>%
+  dplyr::select(plotID, bout_year, endDate, nativeStatusCode, shannon,nspp) %>%
+  # pivot_wider(names_from = nativeStatusCode,
+  #             values_from = shannon) %>%
+  left_join(soil_chem_byplot )%>%
+  left_join(n_i_rel_cover) %>%
+  mutate(site = str_sub(plotID, 1,4))  %>%
+  ggplot(aes(x=rel_cover_exotic, y=nspp)) +
+  geom_point(aes(color = nativeStatusCode)) +
+  #geom_line(alpha = 0.2,aes(color = nativeStatusCode,group=paste(plotID, nativeStatusCode)))+
+  #facet_wrap(~site, scales="free")+
+  geom_smooth(show.legend = F, aes(color = nativeStatusCode), se=T ,method="lm") +
+  theme_pubr()
+
+# significant
+vegan_friendly_div %>%
+  dplyr::select(plotID, bout_year, endDate, nativeStatusCode, shannon,nspp) %>%
+  # pivot_wider(names_from = nativeStatusCode,
+  #             values_from = shannon) %>%
+  left_join(soil_chem_byplot )%>%
+  left_join(n_i_rel_cover) %>%
+  mutate(site = str_sub(plotID, 1,4))  %>%
+  glmer(nspp~rel_cover_exotic*nativeStatusCode+(1|plotID),data= ., family = "poisson") %>%
+  summary()
+
+plot_level %>%
+  mutate(site = str_sub(plotID, 1,4))  %>%
+  filter(rel_cover_exotic <1)%>%
+  ggplot(aes(x=rel_cover_exotic, y=shannon_native, color = site)) +
+  geom_point() +
+  geom_smooth(se=F)
