@@ -5,10 +5,12 @@ library(vegan)
 
 options(stringsAsFactors = FALSE)
 
-
-loadByProduct(dpID = "DP1.10058.001", 
-              site = c("SRER", "ONAQ", "MOAB", "JORN"), 
-              check.size = F) -> x
+if(!file.exists("data/diversity.RDS")){
+  loadByProduct(dpID = "DP1.10058.001", 
+                site = c("SRER", "ONAQ", "MOAB", "JORN"), 
+                check.size = F) -> x
+  saveRDS(x, "data/diversity.RDS")}else{
+x<-readRDS("data/diversity.RDS")}
 
 # data comes in two separate components - 1m2 subplots with cover estimates
 # and 10 and 100m2 subplots with presence only
