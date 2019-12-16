@@ -15,7 +15,7 @@ path_out <- "Data_merged"
 dir.create(path_out, showWarnings = FALSE)
 file_out_charact <- "soil_charact_chem_phys.csv"
 
-neon_sites <- c("SRER", "ONAQ", "MOAB")
+neon_sites <- c("SRER", "ONAQ", "MOAB", "JORN")
 
 ## Data import ----
 
@@ -30,20 +30,23 @@ if(!file.exists(rdss[1])){
   soil_chem_charact <- loadByProduct(dpID = "DP1.10008.001", site = neon_sites, 
                 check.size = F)
   saveRDS(soil_chem_charact, rdss[1])
-}else(soil_chem_charact <- readRDS(rdss[1]))
+  }else(
+    soil_chem_charact <- readRDS(rdss[1]))
 
 # Soil physical properties (Distributed initial characterization)
 if(!file.exists(rdss[2])){
   soil_physical <- loadByProduct(dpID = "DP1.10047.001", site = neon_sites, 
                                  check.size = F)
-  saveRDS(soil_physical, rdss[2])}else{
+  saveRDS(soil_physical, rdss[2])
+  }else{
     soil_physical <- readRDS(rdss[3])}
 
 # Soil chemical properties (Distributed periodic)
 if(!file.exists(rdss[3])){
   soil_chem_periodic <- loadByProduct(dpID = "DP1.10078.001", site = neon_sites, 
                                   check.size = F)
-  saveRDS(soil_chem_periodic, rdss[3])}else{
+  saveRDS(soil_chem_periodic, rdss[3])
+  }else{
     soil_chem_periodic<-readRDS(rdss[3])}
 
 # Soil inorganic nitrogen pools and transformations
@@ -51,13 +54,15 @@ if(!file.exists(rdss[4])){
   soil_chem_nitro <- loadByProduct(dpID = "DP1.10080.001", site = neon_sites, 
                                       check.size = F)
   saveRDS(soil_chem_nitro, rdss[4])
-}else{soil_chem_nitro <- readRDS(rdss[4])}
+}else{
+    soil_chem_nitro <- readRDS(rdss[4])}
 
 # Soil physical properties (Distributed periodic)
 if(!file.exists(rdss[5])){
   soil_physical_periodic <- loadByProduct(dpID = "DP1.10086.001", site = neon_sites, 
                                  check.size = F)
-  saveRDS(soil_physical_periodic, rdss[5])}else{
+  saveRDS(soil_physical_periodic, rdss[5])
+  }else{
     soil_chem_periodic <- readRDS(rdss[5])
   }
 
@@ -98,7 +103,7 @@ if(!file.exists(rdss[5])){
 biogeochem <- soil_chem_charact$spc_biogeochem %>%
   dplyr::select(-uid, -namedLocation, -domainID,-siteID, -nrcsDescriptionID,
                 -horizonID, -analysisStartDate, -biogeoIDnrcs,-laboratoryName,
-                -dataQF, -processingRemarks,-biogeoSampleType) %>%
+                -dataQF, -processingRemarks,-biogeoSampleType, -publicationDate) %>%
   mutate(collectDate = as.Date(collectDate))
 
 biogeochem_l <- biogeochem %>%
@@ -110,7 +115,7 @@ bulk_density <- soil_physical$spc_bulkdensity %>%
   dplyr::select(-uid, -namedLocation, -domainID,-siteID, -nrcsDescriptionID,
                 -horizonID,-laboratoryName, -bulkDensProcessedDate, 
                 -bulkDensMethod,-dataQF, -bulkDensIDnrcs, -remarks,
-                -bulkDensMethodPub, -bulkDensSampleType) %>%
+                -bulkDensMethodPub, -bulkDensSampleType, -publicationDate) %>%
   mutate(collectDate = as.Date(collectDate))
 
 bulk_density_l <- bulk_density %>% 
@@ -122,7 +127,7 @@ particle_size <- soil_physical$spc_particlesize %>%
   dplyr::select(-uid, -namedLocation, -domainID,-siteID, -nrcsDescriptionID,
                 -horizonID,-laboratoryName,-biogeoIDnrcs, -dataQF, 
                 -particleSizeDistMethodPub, -particleSizeDistProcessedDate,
-                -particleSizeDistMethod,-biogeoSampleType)%>%
+                -particleSizeDistMethod,-biogeoSampleType, -publicationDate)%>%
   mutate(collectDate = as.Date(collectDate))
 
 particle_size_l <- particle_size %>%
@@ -165,24 +170,24 @@ write_csv(soil_charact_chem_phys_w, file.path(path_out, "soil_charact_chem_phys_
   #                "horizonName", "biogeoBottomDepth"))
 
 # 
-#looks like single dates of samples at each horizon
-ggplot(soil_chem_charact$spc_biogeochem, aes(x=collectDate, y=ctonRatio,
-                                             color = horizonName)) +
-  geom_point() +
-  facet_wrap(~plotID, scales="free_y")
-
-# maybe taking only the top layer is a good idea?
-ggplot(soil_physical$spc_particlesize %>% filter(biogeoTopDepth == 0),
-       aes(x=collectDate, y=sandTotal, color = horizonName)) +
-  geom_point() +
-  facet_wrap(~plotID)
+# #looks like single dates of samples at each horizon
+# ggplot(soil_chem_charact$spc_biogeochem, aes(x=collectDate, y=ctonRatio,
+#                                              color = horizonName)) +
+#   geom_point() +
+#   facet_wrap(~plotID, scales="free_y")
+# 
+# # maybe taking only the top layer is a good idea?
+# ggplot(soil_physical$spc_particlesize %>% filter(biogeoTopDepth == 0),
+#        aes(x=collectDate, y=sandTotal, color = horizonName)) +
+#   geom_point() +
+#   facet_wrap(~plotID)
 
 #bulk density is very sparsely measured... also, it's not clear to me which 
 #column in the bulk density data frame is the final value of bulk density
-ggplot(soil_physical$spc_bulkdensity,
-       aes(x=collectDate, y=bulkDensCenterDepth, color = horizonName)) +
-  geom_point() +
-  facet_wrap(~plotID)
+# ggplot(soil_physical$spc_bulkdensity,
+#        aes(x=collectDate, y=bulkDensCenterDepth, color = horizonName)) +
+#   geom_point() +
+#   facet_wrap(~plotID)
 
 # Write the merged data to disk
 
@@ -207,15 +212,15 @@ sms <- soil_chem_nitro$sls_soilMoisture %>%
 
 # checking to see if the nitrogen and soil moisture are all th esame plots 
 # in the same order
-nitro$plotID %>% unique == sms$plotID %>% unique
-
-ggplot() +
-  geom_point(data = nitro %>% filter(plotID != ""), 
-             aes(x = collectDate, y=mineral_n_total), 
-             color = "red", shape = 21) +
-  geom_point(data = sms, aes(x=collectDate, y=soilMoisture),
-             color = "blue", shape = 22) +
-  facet_wrap(~plotID, scales = "free_y")
+# nitro$plotID %>% unique == sms$plotID %>% unique
+# 
+# ggplot() +
+#   geom_point(data = nitro %>% filter(plotID != ""), 
+#              aes(x = collectDate, y=mineral_n_total), 
+#              color = "red", shape = 21) +
+#   geom_point(data = sms, aes(x=collectDate, y=soilMoisture),
+#              color = "blue", shape = 22) +
+#   facet_wrap(~plotID, scales = "free_y")
 
 soil_nitro <- left_join(nitro, sms, by = c("plotID", "collectDate", "sampleID"))
 write_csv(soil_nitro, file.path(path_out, "soil_nitro_w.csv"))
@@ -233,27 +238,27 @@ soil_ph <- soil_physical_periodic$sls_soilpH %>%
   dplyr::select(plotID, collectDate, soilInWaterpH, soilInCaClpH,sampleID) %>%
   mutate(collectDate = str_sub(collectDate,1,10) %>% as.Date());glimpse(soil_ph)
 
-# visualizing 
-ggplot(soil_moisture, aes(x=collectDate, y=soilMoisture)) +
-  geom_boxplot(aes(group = collectDate)) +
-  facet_wrap(~plotID)
-
-ggplot(soil_ph, aes(x=collectDate)) +
-  geom_boxplot(aes(y= soilInWaterpH,group = collectDate)) +
-  facet_wrap(~plotID)
-
-ggplot(soil_ph, aes(x=collectDate)) +
-  geom_boxplot(aes(y= soilInCaClpH,group = collectDate)) +
-  facet_wrap(~plotID)
-
-ggplot(soil_ph, aes(x=soilInWaterpH, y=soilInCaClpH)) +
-  geom_point() +
-  geom_abline(slope = 1, intercept = 0) +
-  annotate("text", label = "1:1 line", x=9.2,y=9)
+# # visualizing 
+# ggplot(soil_moisture, aes(x=collectDate, y=soilMoisture)) +
+#   geom_boxplot(aes(group = collectDate)) +
+#   facet_wrap(~plotID)
+# 
+# ggplot(soil_ph, aes(x=collectDate)) +
+#   geom_boxplot(aes(y= soilInWaterpH,group = collectDate)) +
+#   facet_wrap(~plotID)
+# 
+# ggplot(soil_ph, aes(x=collectDate)) +
+#   geom_boxplot(aes(y= soilInCaClpH,group = collectDate)) +
+#   facet_wrap(~plotID)
+# 
+# ggplot(soil_ph, aes(x=soilInWaterpH, y=soilInCaClpH)) +
+#   geom_point() +
+#   geom_abline(slope = 1, intercept = 0) +
+#   annotate("text", label = "1:1 line", x=9.2,y=9)
 
 soil_phys <- left_join(soil_moisture, soil_ph, by = c("plotID", "collectDate", "sampleID"))
 write_csv(soil_phys, file.path(path_out, "soil_phys_periodic_w.csv"))
-unique(soil_phys$collectDate)
+# unique(soil_phys$collectDate)
 
 ## soil chem periodic --- # it's mainly total n and organic C. 
 # This one comes out of the box a little goofed up bit it's easy to fix
@@ -272,21 +277,21 @@ soil_cn <- left_join(soil_n, soil_c,
                      by = c("plotID", "collectDate", "cnSampleID")) %>%
   mutate(soil_cn = organicCPercent/nitrogenPercent)
 write_csv(soil_cn, file.path(path_out, "soil_cn_periodic_w.csv"))
-
-ggplot(soil_cn) +
-  geom_point(aes(x=collectDate, y=soil_cn),
-             color = "red", shape = 21)+
-  facet_wrap(~plotID)
-
-ggplot(soil_cn) +
-  geom_point(aes(x=organicCPercent, y=nitrogenPercent)) 
-
-# looks like the collection dates are pretty well coordinated
-# problem - nothing has been collected since 2017
-ggplot(soil_cn) +
-  geom_point(aes(x=collectDate, y=organicCPercent)) +
-  facet_wrap(~str_sub(plotID,1,4), ncol=1)
-unique(soil_cn$collectDate) %>% sort
+# 
+# ggplot(soil_cn) +
+#   geom_point(aes(x=collectDate, y=soil_cn),
+#              color = "red", shape = 21)+
+#   facet_wrap(~plotID)
+# 
+# ggplot(soil_cn) +
+#   geom_point(aes(x=organicCPercent, y=nitrogenPercent)) 
+# 
+# # looks like the collection dates are pretty well coordinated
+# # problem - nothing has been collected since 2017
+# ggplot(soil_cn) +
+#   geom_point(aes(x=collectDate, y=organicCPercent)) +
+#   facet_wrap(~str_sub(plotID,1,4), ncol=1)
+# unique(soil_cn$collectDate) %>% sort
 
 # note, 
 ## Joining perodic data ----

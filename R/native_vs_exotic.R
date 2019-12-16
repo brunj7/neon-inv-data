@@ -7,7 +7,7 @@ library(lmerTest)
 ## plotting number of species then doing a glmmm ----
 
 vegan_friendly_div %>%
-  dplyr::select(plotID, bout_year, endDate, nativeStatusCode, nspp) %>%
+  dplyr::select(plotID, year, endDate, nativeStatusCode, nspp) %>%
   pivot_wider(names_from = nativeStatusCode,
               values_from = nspp) %>%
   mutate(site = str_sub(plotID, 1,4)) %>%
@@ -22,7 +22,7 @@ vegan_friendly_div %>%
   ggsave("draft_figures/n_vs_e_nspp.png")
 
 vegan_friendly_div %>%
-  dplyr::select(plotID, bout_year, endDate, nativeStatusCode, nspp) %>%
+  dplyr::select(plotID, year, endDate, nativeStatusCode, nspp) %>%
   pivot_wider(names_from = nativeStatusCode,
               values_from = nspp) %>%
   mutate(site = str_sub(plotID, 1,4)) %>%
@@ -31,7 +31,7 @@ vegan_friendly_div %>%
 
 ## plotting shannon diversity then doing an lmm -----
 vegan_friendly_div %>%
-  dplyr::select(plotID, bout_year, endDate, nativeStatusCode, shannon) %>%
+  dplyr::select(plotID, year, endDate, nativeStatusCode, shannon) %>%
   pivot_wider(names_from = nativeStatusCode,
               values_from = shannon) %>%
   mutate(site = str_sub(plotID, 1,4)) %>%
@@ -45,7 +45,7 @@ vegan_friendly_div %>%
   ggsave("draft_figures/n_vs_e_shannon.png")
 
 vegan_friendly_div %>%
-  dplyr::select(plotID, bout_year, endDate, nativeStatusCode, shannon) %>%
+  dplyr::select(plotID, year, endDate, nativeStatusCode, shannon) %>%
   pivot_wider(names_from = nativeStatusCode,
               values_from = shannon) %>%
   mutate(site = str_sub(plotID, 1,4)) %>%
@@ -55,7 +55,7 @@ vegan_friendly_div %>%
 # trying to do what someone wrote in the google doc -----
 # rescaling needed
 vegan_friendly_div %>%
-  dplyr::select(plotID, bout_year, endDate, nativeStatusCode, shannon) %>%
+  dplyr::select(plotID, year, endDate, nativeStatusCode, shannon) %>%
   pivot_wider(names_from = nativeStatusCode,
               values_from = shannon) %>%
   mutate(site = str_sub(plotID, 1,4)) %>%
@@ -74,7 +74,7 @@ soil_chem_byplot<- soil_cn %>%
             CN = mean(soil_cn))
 
 vegan_friendly_div %>%
-  dplyr::select(plotID, bout_year, endDate, nativeStatusCode, shannon) %>%
+  dplyr::select(plotID, year, endDate, nativeStatusCode, shannon) %>%
   # pivot_wider(names_from = nativeStatusCode,
   #             values_from = shannon) %>%
   left_join(soil_chem_byplot )%>%
@@ -90,7 +90,7 @@ vegan_friendly_div %>%
 # so clearly there can't be 200% relative cover so something's messed up with 
 # relative exotic cover
 vegan_friendly_div %>%
-  dplyr::select(plotID, bout_year, endDate, nativeStatusCode, shannon,nspp) %>%
+  dplyr::select(plotID, year, endDate, nativeStatusCode, shannon,nspp) %>%
   # pivot_wider(names_from = nativeStatusCode,
   #             values_from = shannon) %>%
   left_join(soil_chem_byplot )%>%
@@ -105,7 +105,7 @@ vegan_friendly_div %>%
 
 # significant
 vegan_friendly_div %>%
-  dplyr::select(plotID, bout_year, endDate, nativeStatusCode, shannon,nspp) %>%
+  dplyr::select(plotID, year, endDate, nativeStatusCode, shannon,nspp) %>%
   # pivot_wider(names_from = nativeStatusCode,
   #             values_from = shannon) %>%
   left_join(soil_chem_byplot )%>%
@@ -119,4 +119,6 @@ plot_level %>%
   filter(rel_cover_exotic <1)%>%
   ggplot(aes(x=rel_cover_exotic, y=shannon_native, color = site)) +
   geom_point() +
+  facet_wrap(~site, scales = "free")+
+  theme_pubr()+
   geom_smooth(se=F)
