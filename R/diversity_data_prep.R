@@ -5,6 +5,7 @@ library(vegan)
 
 options(stringsAsFactors = FALSE)
 
+# avoiding downloading over and over
 if(!file.exists("data/diversity.RDS")){
   loadByProduct(dpID = "DP1.10058.001", 
                 site = c("SRER", "ONAQ", "MOAB", "JORN"), 
@@ -68,15 +69,23 @@ traces <- x$div_10m2Data100m2Data %>%
             family = first(family)) %>%
   ungroup()
 
-unks <- rbind(cover, traces) %>% 
+# side tangent - checking out unknown species. I (Adam) could probably figure
+# out most of these
+
+full_on_cover<- rbind(cover, traces)%>%
+  mutate(site = str_sub(plotID, 1,4))
+
+source("R/unk_investigation.R")
+
+unks <- full_on_cover %>% 
   filter(nativeStatusCode == "UNK") %>% 
-  select(taxonID, plotID, family) %>%
+  select(taxonID, plotID, family, scientificName) %>%
   mutate(site = str_sub(plotID, 1,4)) %>%
   group_by(site, taxonID) %>%
-  summarise(family = first(family)) %>%
+  summarise(family = first(family),
+            scientificName = paste(unique(scientificName))) %>%
   ungroup()
 
-full_on_cover<- rbind(cover, traces)
 
 # calculating various indexes at plot level at each timestep -------------------
 # native vs invasive cover and relative cover
