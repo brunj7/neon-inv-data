@@ -30,41 +30,35 @@ if(!file.exists(rdss[1])){
   soil_chem_charact <- loadByProduct(dpID = "DP1.10008.001", site = neon_sites, 
                 check.size = F)
   saveRDS(soil_chem_charact, rdss[1])
-  }else(
-    soil_chem_charact <- readRDS(rdss[1]))
+  }else{soil_chem_charact<-readRDS(rdss[1])}
 
 # Soil physical properties (Distributed initial characterization)
 if(!file.exists(rdss[2])){
   soil_physical <- loadByProduct(dpID = "DP1.10047.001", site = neon_sites, 
                                  check.size = F)
   saveRDS(soil_physical, rdss[2])
-  }else{
-    soil_physical <- readRDS(rdss[3])}
+}else{soil_physical <- readRDS(rdss[2])}
 
 # Soil chemical properties (Distributed periodic)
 if(!file.exists(rdss[3])){
   soil_chem_periodic <- loadByProduct(dpID = "DP1.10078.001", site = neon_sites, 
                                   check.size = F)
   saveRDS(soil_chem_periodic, rdss[3])
-  }else{
-    soil_chem_periodic<-readRDS(rdss[3])}
+}else{soil_chem_periodic<-readRDS(rdss[3])}
 
 # Soil inorganic nitrogen pools and transformations
 if(!file.exists(rdss[4])){
   soil_chem_nitro <- loadByProduct(dpID = "DP1.10080.001", site = neon_sites, 
                                       check.size = F)
   saveRDS(soil_chem_nitro, rdss[4])
-}else{
-    soil_chem_nitro <- readRDS(rdss[4])}
+}else{soil_chem_nitro <- readRDS(rdss[4])}
 
 # Soil physical properties (Distributed periodic)
 if(!file.exists(rdss[5])){
   soil_physical_periodic <- loadByProduct(dpID = "DP1.10086.001", site = neon_sites, 
                                  check.size = F)
   saveRDS(soil_physical_periodic, rdss[5])
-  }else{
-    soil_chem_periodic <- readRDS(rdss[5])
-  }
+}else{soil_physical_periodic <- readRDS(rdss[5])}
 
 
 ## check content we got back from the API -----
