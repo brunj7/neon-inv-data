@@ -72,10 +72,12 @@ traces <- x$div_10m2Data100m2Data %>%
 # side tangent - checking out unknown species. I (Adam) could probably figure
 # out most of these
 
-full_on_cover<- rbind(cover, traces)%>%
-  mutate(site = str_sub(plotID, 1,4))
-
+# figured out a fair amount so far... made an unk fixer function 
 source("R/unk_investigation.R")
+
+full_on_cover <- rbind(cover, traces) %>%
+  mutate(site = str_sub(plotID, 1,4)) %>%
+  unk_fixer()
 
 unks <- full_on_cover %>% 
   filter(nativeStatusCode == "UNK") %>% 
@@ -89,7 +91,7 @@ unks <- full_on_cover %>%
 
 # calculating various indexes at plot level at each timestep -------------------
 # native vs invasive cover and relative cover
-n_i <- rbind(cover, traces)%>%
+n_i <- full_on_cover%>%
   group_by(plotID, year) %>%
   mutate(total_cover = sum(cover))%>%
   ungroup() %>%
@@ -128,7 +130,7 @@ n_i_rel_cover <- n_i %>%
          rel_cover_unk = UNK)
 
 #diversity indexes splitting between native status
-vegan_friendly_div <- rbind(cover, traces) %>%
+vegan_friendly_div <- full_on_cover %>%
   group_by(plotID, taxonID, year, endDate, nativeStatusCode) %>%
   summarise(cover = sum(cover)) %>%
   ungroup() %>%
@@ -165,7 +167,7 @@ shannon <- vegan_friendly_div %>%
   rename(shannon_native = N, shannon_exotic=I, shannon_unk = UNK)
 
 # total diversity - not splitting between native status
-vegan_friendly_div_total <- rbind(cover, traces) %>%
+vegan_friendly_div_total <- full_on_cover %>%
   group_by(plotID, taxonID, year, endDate) %>%
   summarise(cover = sum(cover)) %>%
   ungroup() %>%

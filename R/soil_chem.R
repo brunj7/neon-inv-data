@@ -209,8 +209,8 @@ sms <- soil_chem_nitro$sls_soilMoisture %>%
 # nitro$plotID %>% unique == sms$plotID %>% unique
 # 
 # ggplot() +
-#   geom_point(data = nitro %>% filter(plotID != ""), 
-#              aes(x = collectDate, y=mineral_n_total), 
+#   geom_point(data = nitro %>% filter(plotID != ""),
+#              aes(x = collectDate, y=mineral_n_total),
 #              color = "red", shape = 21) +
 #   geom_point(data = sms, aes(x=collectDate, y=soilMoisture),
 #              color = "blue", shape = 22) +
@@ -218,6 +218,7 @@ sms <- soil_chem_nitro$sls_soilMoisture %>%
 
 soil_nitro <- left_join(nitro, sms, by = c("plotID", "collectDate", "sampleID"))
 write_csv(soil_nitro, file.path(path_out, "soil_nitro_w.csv"))
+
 
 
 ## soil physical periodic ----

@@ -80,15 +80,17 @@ vegan_friendly_div %>%
   left_join(soil_chem_byplot )%>%
   left_join(n_i_rel_cover) %>%
   mutate(site = str_sub(plotID, 1,4))  %>%
-  ggplot(aes(x=endDate, y=shannon)) +
-  geom_point(aes(color = nativeStatusCode)) +
-  geom_line(alpha = 0.2,aes(color = nativeStatusCode,group=paste(plotID, nativeStatusCode)))+
-  facet_wrap(~site, scales="free_y")+
-  geom_smooth(show.legend = F, aes(color = nativeStatusCode), se=F) +
+  ggplot(aes(x=rel_cover_exotic, y=CN)) +
+  geom_point(aes(color = site)) +
+  # geom_line(alpha = 0.2#,
+            # aes(color = nativeStatusCode,group=paste(plotID, nativeStatusCode))
+            # )+
+  # facet_wrap(~site, scales="free")+
+  geom_smooth(show.legend = F) +
+  ylab("Soil C:N")+
   theme_pubr()
 
-# so clearly there can't be 200% relative cover so something's messed up with 
-# relative exotic cover
+#relative exotic cover vs diversity
 vegan_friendly_div %>%
   dplyr::select(plotID, year, endDate, nativeStatusCode, shannon,nspp) %>%
   # pivot_wider(names_from = nativeStatusCode,
@@ -118,7 +120,7 @@ plot_level %>%
   mutate(site = str_sub(plotID, 1,4))  %>%
   filter(rel_cover_exotic <1)%>%
   ggplot(aes(x=rel_cover_exotic, y=shannon_native, color = site)) +
-  geom_point() +
-  facet_wrap(~site, scales = "free")+
+  geom_point(alpha = 0.25) +
+  facet_wrap(~site, scales = "free_y")+
   theme_pubr()+
   geom_smooth(se=F)
