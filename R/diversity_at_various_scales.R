@@ -5,7 +5,7 @@ library(ggpubr)
 library(vegan)
 
 options(stringsAsFactors = FALSE)
-
+source("R/unk_investigation.R")
 # avoiding downloading over and over
 if(!file.exists("data/diversity.RDS")){
   loadByProduct(dpID = "DP1.10058.001", 
@@ -96,3 +96,71 @@ cover4 <- cover8_1m2_10m2 %>%
   ungroup() %>%
   unk_fixer()
 
+# turningthem vegan friendly
+
+vegify <- function(df) {
+  return(
+    df %>%
+      mutate(p_sp_y = paste(plotID, subplotID, year, sep = "_")) %>%
+      dplyr::select(p_sp_y, taxonID, cover) %>%
+      na.omit() %>% # not sure how, but there are some NA's where they shouldn't be
+      pivot_wider(id_cols = p_sp_y, 
+                  names_from = taxonID, 
+                  values_from = cover,
+                  values_fill = list(cover=0)) %>%
+      tibble::column_to_rownames("p_sp_y") %>%
+      as.data.frame()
+  )
+}
+
+# beta diversity calculations --------------------------------------------------
+sites <- unique(cover4$site)
+
+s<-list()
+bd_vectors<- list()
+bdmods<-list()
+for(ss in 1:length(sites)) {
+  sps <- cover4 %>%
+    filter(site == sites[ss]) %>%
+    vegify()
+  plot_ids <- str_sub(rownames(sps),1,8)
+  years <- str_sub(rownames(sps), 13,16)
+  rownames(sps)
+  comm <- decostand(sps, 
+                    method = "total")
+  
+  # metaMDS takes a REALLY long time with huge data like this... not sure how to proceed
+  # comm.k.mds <- metaMDS(comm, distance = "kul", trace = 0)
+  
+  # takes ~5min
+  t0 <- Sys.time()
+  bdmod_sim <- betadisper(betadiver(comm, 1), paste(plot_ids,years, sep="_"))
+  print(Sys.time() - t0)
+  
+  bdmods[[ss]] <- bdmod_sim
+  # # quick viz
+  # plot(bdmods[[4]], label = F)
+  # # begs the question - should each site be done separately?
+  centroids <- bdmod_sim$centroids[,1:2] %>%
+    as_tibble(rownames = "group") %>%
+    rename(centroid_x = PCoA1, centroid_y = PCoA2)
+  
+  s[[ss]] <- data.frame(bdmod_sim$distances, 
+                        bdmod_sim$group,
+                        bdmod_sim$vectors[,1:2]) %>%
+    dplyr::rename(bd = bdmod_sim.distances, group = bdmod_sim.group) %>%
+    mutate(year = str_sub(group,10,13) %>% as.numeric,
+           site = str_sub(group,1,4),
+           plotID = str_sub(group, 1,8),
+           subplotID = str_split(rownames(sps), "_",simplify = T)[,3]) %>%
+    left_join(centroids, by = "group") %>%
+    dplyr::select(-group)
+}
+full_bd<- do.call("rbind",s)
+
+ggplot(full_bd, aes(color = as.factor(year))) +
+  geom_line(aes(x = PCoA1, y = PCoA2, group=paste(plotID, year)),
+            alpha = 0.5)+
+  geom_point(aes(x = centroid_x, y = centroid_y)) +
+  facet_wrap(~site) +
+  theme_pubr()
