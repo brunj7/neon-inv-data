@@ -15,5 +15,5 @@ plot_level%>%
 
 plot_level%>%
   mutate(year = as.numeric(year)-2013) %>% # making the year easier for lmer to deal with
-  lmerTest::lmer(shannon_total~rel_cover_exotic*site + (1|plotID), data=.) %>%
+  lmerTest::lmer(shannon_total~rel_cover_exotic*site*year + (1|plotID), data=.) %>%
   summary
