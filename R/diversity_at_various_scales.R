@@ -77,7 +77,7 @@ traces100s <- x$div_10m2Data100m2Data %>%
 # aggregating at different scales ----------------------------------------------
 cover8_1m2 <- cover8 %>%
   mutate(site = str_sub(plotID, 1,4)) %>%
-  unk_fixer()
+  unk_fixer() #%>% get_diversity_info()
 
 cover8_1m2_10m2 <- rbind(cover8, traces8) %>%
   mutate(site = str_sub(plotID, 1,4)) %>%
@@ -116,7 +116,10 @@ vegify <- function(df) {
 # beta diversity calculations --------------------------------------------------
 sites <- unique(cover4$site)
 
+covers<- list(cover8_1m2, cover8_1m2_10m2, cover4)
 s<-list()
+sor <- list()
+jac <- list()
 bd_vectors<- list()
 bdmods<-list()
 for(ss in 1:length(sites)) {
@@ -125,18 +128,28 @@ for(ss in 1:length(sites)) {
     vegify()
   plot_ids <- str_sub(rownames(sps),1,8)
   years <- str_sub(rownames(sps), 13,16)
-  rownames(sps)
-  comm <- decostand(sps, 
-                    method = "total")
+
   
   # metaMDS takes a REALLY long time with huge data like this... not sure how to proceed
   # comm.k.mds <- metaMDS(comm, distance = "kul", trace = 0)
   
   # takes ~5min
   t0 <- Sys.time()
-  bdmod_sim <- betadisper(betadiver(comm, 1), paste(plot_ids,years, sep="_"))
-  print(Sys.time() - t0)
+  bdmod_sim <- betadisper(betadiver(sps, 1), paste(plot_ids,years, sep="_"))
   
+  grps <- paste(plot_ids, years, sep="_") %>% unique()
+  jacbd <- list()
+  for(i in 1:length(grps)){
+    jacbd[[i]]<-sps %>%
+      mutate(group = paste(plot_ids, years, sep = "_")) %>%
+      filter(group == grps[i]) %>%
+      dplyr::select(-group) %>%
+      nestedbetajac() %>%
+      as_tibble(rownames = "variable") %>%
+      mutate(group = grps[i]) %>%
+      pivot_wider(names_from = variable, values_from = value, id_cols=group)
+  }
+  bdjac <- do.call("rbind", jacbd)
   bdmods[[ss]] <- bdmod_sim
   # # quick viz
   # plot(bdmods[[4]], label = F)
@@ -154,7 +167,11 @@ for(ss in 1:length(sites)) {
            plotID = str_sub(group, 1,8),
            subplotID = str_split(rownames(sps), "_",simplify = T)[,3]) %>%
     left_join(centroids, by = "group") %>%
+    left_join(bdjac, by = "group") %>%
     dplyr::select(-group)
+  
+  print(Sys.time() - t0)
+  
 }
 full_bd<- do.call("rbind",s)
 
@@ -164,3 +181,9 @@ ggplot(full_bd, aes(color = as.factor(year))) +
   geom_point(aes(x = centroid_x, y = centroid_y)) +
   facet_wrap(~site) +
   theme_pubr()
+
+ggplot(full_bd, aes(x=year, y=jaccard, color = site)) +
+  geom_smooth() +
+  geom_line(aes(group = plotID), alpha = 0.25)+
+  facet_wrap(~site) +
+  theme_pubr() 
