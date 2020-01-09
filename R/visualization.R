@@ -2,6 +2,7 @@
 ## 
 
 source("R/diversity_data_prep.R")
+source("R/soil_chem.R")
 library(lmerTest)
 
 ## plotting number of species then doing a glmmm ----
@@ -33,7 +34,6 @@ plot_level %>%
 
 # basic AF relating it to env variables
 
-source("R/soil_chem.R")
 
 soil_chem_byplot<- soil_cn %>%
   group_by(plotID) %>%

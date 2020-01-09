@@ -14,6 +14,9 @@ if(!file.exists("data/diversity.RDS")){
   saveRDS(x, "data/diversity.RDS")}else{
     x<-readRDS("data/diversity.RDS")}
 
+
+# data wrangling section =======================================================
+
 # first, each 1m2 + 10m2 (each 1m2 is nested with a 10m2 around it)
 # 8 means there are 8 subplots
 cover8 <- x$div_1m2Data %>% 
@@ -26,7 +29,7 @@ cover8 <- x$div_1m2Data %>%
   # that way, a fall-bloomer that isn't visible in spring, for example, 
   # will be given its full cover value for fall, but then a species 
   # that is there for both seasons will be averaged, if that makes sense
-  summarise(cover = mean(percentCover, na.rm=TRUE),
+  summarise(cover = max(percentCover),
             nativeStatusCode = first(nativeStatusCode),
             scientificName = first(scientificName),
             endDate = first(endDate),
@@ -74,6 +77,50 @@ traces100s <- x$div_10m2Data100m2Data %>%
          subplotID == "40"|
          subplotID == "41")
 
+cover_plot <- x$div_1m2Data %>% 
+  mutate(endDate = as.Date(endDate)) %>%
+  dplyr::filter(divDataType == "plantSpecies") %>%
+  mutate(year = str_c(str_sub(endDate,1,4)))%>% 
+  group_by(plotID, subplotID, taxonID, year) %>%
+  # dealing with the multiple bout issue by first getting the max cover
+  # per sampling effort
+  summarise(cover = max(percentCover),
+            nativeStatusCode = first(nativeStatusCode),
+            scientificName = first(scientificName),
+            endDate = first(endDate),
+            family = first(family)) %>%
+  ungroup()  %>% 
+  filter(taxonID != "") %>%
+  group_by(plotID, taxonID, year) %>%
+  summarise(cover = sum(cover, na.rm=TRUE)/8,
+            nativeStatusCode = first(nativeStatusCode),
+            scientificName = first(scientificName),
+            endDate = first(endDate),
+            family = first(family)) %>%
+  ungroup()
+
+traces_plot <- x$div_10m2Data100m2Data %>%
+  mutate(endDate = as.Date(endDate)) %>%
+  dplyr::filter(targetTaxaPresent == "Y") %>%
+  mutate(year = str_c(str_sub(endDate,1,4)))%>%
+  group_by(plotID, subplotID, taxonID, year) %>%
+  summarise(cover = 0.5,
+            endDate = first(endDate),
+            scientificName = first(scientificName),
+            nativeStatusCode = first(nativeStatusCode),
+            family = first(family)) %>%
+  ungroup() %>% 
+  filter(taxonID != "") %>%
+  group_by(plotID, taxonID, year) %>%
+  summarise(cover = sum(cover, na.rm=TRUE)/12,
+            nativeStatusCode = first(nativeStatusCode),
+            scientificName = first(scientificName),
+            endDate = first(endDate),
+            family = first(family)) %>%
+  ungroup()
+
+
+
 # aggregating at different scales ----------------------------------------------
 cover8_1m2 <- cover8 %>%
   mutate(site = str_sub(plotID, 1,4)) %>%
@@ -94,6 +141,10 @@ cover4 <- cover8_1m2_10m2 %>%
             family = first(family),
             site = first(site)) %>%
   ungroup() %>%
+  unk_fixer()
+
+cover_plot <- rbind(cover_plot, traces_plot) %>%
+  mutate(site = str_sub(plotID, 1,4)) %>%
   unk_fixer()
 
 # turningthem vegan friendly
