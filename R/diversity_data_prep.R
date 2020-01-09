@@ -34,9 +34,10 @@ source("R/unk_investigation.R")
 # calculating various indexes at plot level at each timestep -------------------
 
 
-# gonna make this whole thing into a giant function
+# for multiple families or species, concatenate the species and family names
+# e.g. species = c("Bromus tectorum", "Sisymbrium altissimum")
 get_diversity_info <- function(neon_div_object, 
-                               scale, 
+                               scale = "plot", 
                                families = "Poaceae",
                                species = "Bromus tectorum") { 
   # scale options: "1", "10", "100", "plot"
@@ -408,4 +409,9 @@ write_csv(sp_level_1, "data/subplot_level_diversity_1.csv")
 write_csv(sp_level_10, "data/subplot_level_diversity_10.csv")
 write_csv(sp_level_100, "data/subplot_level_diversity_100.csv")
 
+# for example
+test <- get_diversity_info(x,"plot", 
+                           families = c("Poaceae", "Brassicaceae"),
+                           species = c("Bromus tectorum", "Poa secunda"))
+summary(test)
 
