@@ -40,7 +40,7 @@ get_diversity_info <- function(neon_div_object,
                                scale = "plot", 
                                families = "Poaceae",
                                species = "Bromus tectorum") { 
-  # scale options: "1", "10", "100", "plot"
+  # scale options: "1m", "10m", "100m", "plot"
     # 1 means aggregated by 1m2 subplots only,
     # 10 means 1m2 and 10m2 subplots are aggregated
     # 100 means each quadrant of the plot is aggregated...
@@ -169,9 +169,9 @@ get_diversity_info <- function(neon_div_object,
     unk_fixer()
   
   
-  if(scale == "1") full_on_cover <- cover8_1m2
-  if(scale == "10") full_on_cover <- cover8_1m2_10m2
-  if(scale == "100") full_on_cover <- cover4
+  if(scale == "1m") full_on_cover <- cover8_1m2
+  if(scale == "10m") full_on_cover <- cover8_1m2_10m2
+  if(scale == "100m") full_on_cover <- cover4
   
   
   
@@ -375,7 +375,7 @@ get_diversity_info <- function(neon_div_object,
     ungroup()
   
   # note to self - fix that hard-coding!
-  div_total = dplyr::select(vegan_friendly_div_total, plotID, subplotID,year)
+  div_total <- dplyr::select(vegan_friendly_div_total, plotID, subplotID,year)
   div_total$shannon_total = diversity(vegan_friendly_div_total[4:ncol(vegan_friendly_div_total)])
   div_total$nspp_total = specnumber(vegan_friendly_div_total[4:ncol(vegan_friendly_div_total)])
   
@@ -391,7 +391,9 @@ get_diversity_info <- function(neon_div_object,
     left_join(rc_ng, by = c("plotID", "subplotID", "year")) %>%
     left_join(rc_sp, by = c("plotID", "subplotID", "year")) %>%
     left_join(c_sp, by = c("plotID", "subplotID", "year")) %>%
-    mutate(site = str_sub(plotID, 1,4))
+    mutate(site = str_sub(plotID, 1,4),
+           scale = scale)%>%
+    mutate(scale = factor(scale, levels = c("1m","10m","100m", "plot")))
   
   # seems crazy, i know...
   final_table[is.na(final_table)] <- 0
@@ -400,18 +402,18 @@ get_diversity_info <- function(neon_div_object,
 }
 
 plot_level <- get_diversity_info(neon_div_object = x, scale = "plot")
-sp_level_1 <- get_diversity_info(x, "1")
-sp_level_10 <- get_diversity_info(x, "10")
-sp_level_100 <- get_diversity_info(x, "100")
+sp_level_1 <- get_diversity_info(x, "1m")
+sp_level_10 <- get_diversity_info(x, "10m")
+sp_level_100 <- get_diversity_info(x, "100m")
 
 write_csv(plot_level, "data/plot_level_diversity_stuff.csv")
 write_csv(sp_level_1, "data/subplot_level_diversity_1.csv")
 write_csv(sp_level_10, "data/subplot_level_diversity_10.csv")
 write_csv(sp_level_100, "data/subplot_level_diversity_100.csv")
 
-# for example
-test <- get_diversity_info(x,"plot", 
-                           families = c("Poaceae", "Brassicaceae"),
-                           species = c("Bromus tectorum", "Poa secunda"))
-summary(test)
+# # for example
+# test <- get_diversity_info(x,"plot", 
+#                            families = c("Poaceae", "Brassicaceae"),
+#                            species = c("Bromus tectorum", "Poa secunda"))
+# summary(test)
 

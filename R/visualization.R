@@ -7,24 +7,26 @@ library(lmerTest)
 
 ## plotting number of species then doing a glmmm ----
 
-plot_level %>%
-  mutate(site = str_sub(plotID, 1,4)) %>%
-  ggplot(aes(x=nspp_native, y=nspp_exotic, color = site)) +
-  geom_point() +
+all_scales <- rbind(plot_level, sp_level_1, sp_level_10, sp_level_100) 
+
+all_scales %>%
+  ggplot(aes(x=nspp_exotic, y=nspp_native, color = scale)) +
+  geom_point(alpha=0.5) +
   geom_smooth(method = "lm", show.legend = F) +
   ggtitle("Native vs. Exotic Species Richness") +
-  xlab("Native Species") +
-  ylab("Exotic Species") +
+  ylab("Native Species") +
+  xlab("Exotic Species") +
   theme_pubr() +
-# facet_wrap(~site, scales = "free") 
+  facet_wrap(~site) +
+  theme(legend.position = c(1,1),
+        legend.justification = c(1,1)) +
   ggsave("draft_figures/n_vs_e_nspp.png")
 
 ## plotting shannon diversity then doing an lmm -----
-plot_level %>%
-  mutate(site = str_sub(plotID, 1,4)) %>%
-  ggplot(aes(x=shannon_exotic, y=shannon_native, color = site)) +
+all_scales %>%
+  ggplot(aes(x=shannon_exotic, y=shannon_native, color = scale)) +
   geom_point() +
-  facet_wrap(~year, scales = "free") +
+  facet_wrap(~site, scales = "free") +
   geom_smooth(method = "lm", show.legend = F) +
   ggtitle("Native vs. Exotic Shannon Diversity")+
   ylab("Native Diversity") +
@@ -65,17 +67,17 @@ plot_level%>%
   geom_smooth(show.legend = F, aes(y = shannon_exotic),color = "red", se=T ,method="lm") +
   theme_pubr()
 
-plot_level%>%
+all_scales%>%
   ggplot(aes(x = rc_exotic_Poaceae)) +
   geom_point(aes(y = shannon_native), color = "darkgreen") +
   geom_point(aes(y = shannon_exotic), color = "red") +
   ylab("shannon diversity")+
   geom_point(aes(y=shannon_total), color = "blue") +
-  # facet_wrap(~year, scales="free")+
+  facet_wrap(~scale, scales="free")+
   # facet_wrap(~site, scales="free")+
-  geom_smooth(show.legend = F, aes(y = shannon_total),color = "blue", se=T ,method="lm")+
-  geom_smooth(show.legend = F, aes(y = shannon_native),color = "darkgreen", se=T ,method="lm") +
-  geom_smooth(show.legend = F, aes(y = shannon_exotic),color = "red", se=T ,method="lm") +
+  geom_smooth(show.legend = F, aes(y = shannon_total),color = "blue", se=T ,method="loess")+
+  geom_smooth(show.legend = F, aes(y = shannon_native),color = "darkgreen", se=T ,method="loess") +
+  geom_smooth(show.legend = F, aes(y = shannon_exotic),color = "red", se=T ,method="loess") +
   theme_pubr()
 
 plot_level %>%
@@ -87,15 +89,15 @@ plot_level %>%
   theme_pubr()+
   geom_smooth(se=F)
 
-plot_level %>%
-  ggplot(aes(x=rel_cover_exotic, y=shannon_total, color = site)) +
+all_scales %>%
+  ggplot(aes(x=rel_cover_exotic, y=shannon_total, color = scale)) +
   geom_point(alpha = 0.25) +
   facet_wrap(~site, scales = "free_y")+
   theme_pubr()+
   geom_smooth(se=F)
 
-plot_level %>%
-  ggplot(aes(x=rc_exotic_Poaceae, y=shannon_total, color = site)) +
+all_scales %>%
+  ggplot(aes(x=rc_exotic_Poaceae, y=shannon_total, color = scale)) +
   geom_point(alpha = 0.25) +
   facet_wrap(~site, scales = "free_y")+
   theme_pubr()+
