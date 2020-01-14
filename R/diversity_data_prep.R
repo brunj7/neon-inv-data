@@ -37,7 +37,8 @@ source("R/unk_investigation.R")
 # for multiple families or species, concatenate the species and family names
 # e.g. species = c("Bromus tectorum", "Sisymbrium altissimum")
 get_diversity_info <- function(neon_div_object, 
-                               scale = "plot", 
+                               scale = "plot",
+                               trace_cover = 0.5,
                                families = "Poaceae",
                                species = "Bromus tectorum") { 
   # scale options: "1m", "10m", "100m", "plot"
@@ -74,7 +75,7 @@ get_diversity_info <- function(neon_div_object,
       dplyr::filter(targetTaxaPresent == "Y") %>%
       mutate(year = str_c(str_sub(endDate,1,4)))%>%
       group_by(plotID, subplotID, taxonID, year) %>%
-      summarise(cover = 0.5,
+      summarise(cover = trace_cover,
                 scientificName = first(scientificName),
                 nativeStatusCode = first(nativeStatusCode),
                 family = first(family)) %>%
@@ -118,7 +119,7 @@ get_diversity_info <- function(neon_div_object,
     dplyr::filter(targetTaxaPresent == "Y") %>%
     mutate(year = str_c(str_sub(endDate,1,4)))%>%
     group_by(plotID, subplotID, taxonID, year) %>%
-    summarise(cover = 0.5,
+    summarise(cover = trace_cover,
               scientificName = first(scientificName),
               nativeStatusCode = first(nativeStatusCode),
               family = first(family)) %>%
@@ -135,7 +136,7 @@ get_diversity_info <- function(neon_div_object,
     dplyr::filter(targetTaxaPresent == "Y") %>%
     mutate(year = str_c(str_sub(endDate,1,4)))%>%
     group_by(plotID, subplotID, taxonID, year) %>%
-    summarise(cover = 0.5,
+    summarise(cover = trace_cover,
               scientificName = first(scientificName),
               nativeStatusCode = first(nativeStatusCode),
               family = first(family)) %>%
@@ -405,11 +406,12 @@ plot_level <- get_diversity_info(neon_div_object = x, scale = "plot")
 sp_level_1 <- get_diversity_info(x, "1m")
 sp_level_10 <- get_diversity_info(x, "10m")
 sp_level_100 <- get_diversity_info(x, "100m")
+all_scales <- rbind(plot_level, sp_level_1, sp_level_10, sp_level_100) 
 
-write_csv(plot_level, "data/plot_level_diversity_stuff.csv")
-write_csv(sp_level_1, "data/subplot_level_diversity_1.csv")
-write_csv(sp_level_10, "data/subplot_level_diversity_10.csv")
-write_csv(sp_level_100, "data/subplot_level_diversity_100.csv")
+# write_csv(plot_level, "data/plot_level_diversity.csv")
+# write_csv(sp_level_1, "data/subplot_level_diversity_1.csv")
+# write_csv(sp_level_10, "data/subplot_level_diversity_10.csv")
+# write_csv(sp_level_100, "data/subplot_level_diversity_100.csv")
 
 # # for example
 # test <- get_diversity_info(x,"plot", 

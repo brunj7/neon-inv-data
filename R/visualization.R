@@ -7,13 +7,13 @@ library(lmerTest)
 
 ## plotting number of species then doing a glmmm ----
 
-all_scales <- rbind(plot_level, sp_level_1, sp_level_10, sp_level_100) 
-
 all_scales %>%
   ggplot(aes(x=nspp_exotic, y=nspp_native, color = scale)) +
   geom_point(alpha=0.5) +
-  geom_smooth(method = "lm", show.legend = F) +
-  ggtitle("Native vs. Exotic Species Richness") +
+  geom_smooth(method = "glm", 
+              method.args = list(family = "poisson"),
+              show.legend = F) +
+  ggtitle("Native vs. Exotic Species Richness, (Poisson glm)") +
   ylab("Native Species") +
   xlab("Exotic Species") +
   theme_pubr() +
