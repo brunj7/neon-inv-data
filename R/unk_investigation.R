@@ -2,6 +2,17 @@
 # There is a flora specifically for the Jornada
 # there is probably a plant list for the santa rita experimental range on seinet
 # but that site is down at the moment
+
+# # side tangent - to look at remaining unks do something like this
+# unks <- full_on_cover %>% 
+#   filter(nativeStatusCode == "UNK") %>% 
+#   select(taxonID, plotID, family, scientificName) %>%
+#   mutate(site = str_sub(plotID, 1,4)) %>%
+#   group_by(site, taxonID) %>%
+#   summarise(family = first(family),
+#             scientificName = paste(unique(scientificName))) %>%
+#   ungroup()
+
 unk_fixer <- function(df){
   return(
     df %>%

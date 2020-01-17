@@ -16,41 +16,13 @@ x<-readRDS("data/diversity.RDS")}
 # data comes in two separate components - 1m2 subplots with cover estimates
 # and 10 and 100m2 subplots with presence only
 
-# checking out unknown species. I (Adam)
-# figured out a fair amount so far... made an unk fixer function 
+# function to fix some of the unknown species
 source("R/unk_investigation.R")
 
-# # side tangent - to look at remaining unks do something like this
-# unks <- full_on_cover %>% 
-#   filter(nativeStatusCode == "UNK") %>% 
-#   select(taxonID, plotID, family, scientificName) %>%
-#   mutate(site = str_sub(plotID, 1,4)) %>%
-#   group_by(site, taxonID) %>%
-#   summarise(family = first(family),
-#             scientificName = paste(unique(scientificName))) %>%
-#   ungroup()
 
-
-# calculating various indexes at plot level at each timestep -------------------
-
-
-# for multiple families or species, concatenate the species and family names
-# e.g. species = c("Bromus tectorum", "Sisymbrium altissimum")
-get_diversity_info <- function(neon_div_object, 
-                               scale = "plot",
-                               trace_cover = 0.5,
-                               families = "Poaceae",
-                               species = "Bromus tectorum") { 
-  # scale options: "1m", "10m", "100m", "plot"
-    # 1 means aggregated by 1m2 subplots only,
-    # 10 means 1m2 and 10m2 subplots are aggregated
-    # 100 means each quadrant of the plot is aggregated...
-      # i.e. 2 1m2 and 10m2 subplots plus the 100m2 subplot
-    # plot means the whole plot is aggregated together
-  # concatenate a list of family names for family cover, grass fam is default
-  # concatenate a list of species names in similar fashion
+get_longform_cover <- function(neon_div_object, trace_cover=0.5, scale = "plot"){
   if(scale == "plot"){
-    cover <- x$div_1m2Data %>% 
+    cover <- neon_div_object$div_1m2Data %>% 
       mutate(endDate = as.Date(endDate)) %>%
       dplyr::filter(divDataType == "plantSpecies") %>%
       mutate(year = str_c(str_sub(endDate,1,4)))%>% 
@@ -70,7 +42,7 @@ get_diversity_info <- function(neon_div_object,
                 family = first(family)) %>%
       ungroup()
     
-    traces <- x$div_10m2Data100m2Data %>%
+    traces <- neon_div_object$div_10m2Data100m2Data %>%
       mutate(endDate = as.Date(endDate)) %>%
       dplyr::filter(targetTaxaPresent == "Y") %>%
       mutate(year = str_c(str_sub(endDate,1,4)))%>%
@@ -89,11 +61,17 @@ get_diversity_info <- function(neon_div_object,
       ungroup()
     
     full_on_cover <- rbind(cover, traces) %>%
-      mutate(site = str_sub(plotID, 1,4)) %>%
+      group_by(plotID, taxonID, year, nativeStatusCode, scientificName, family) %>%
+      summarise(cover = sum(cover)) %>%
+      ungroup()%>%
+      mutate(site = str_sub(plotID, 1,4),
+             subplotID = "plot") %>%
       unk_fixer()
+    
+    return(full_on_cover)
   }
   
-  cover8 <- x$div_1m2Data %>% 
+  cover8 <- neon_div_object$div_1m2Data %>% 
     mutate(endDate = as.Date(endDate)) %>%
     dplyr::filter(divDataType == "plantSpecies") %>%
     mutate(year = str_c(str_sub(endDate,1,4)))%>%
@@ -114,7 +92,7 @@ get_diversity_info <- function(neon_div_object,
   # 10m2,100m2 are given 0.5 (we can change later)
   # unique(x$div_10m2Data100m2Data$subplotID) # there are 12 subplots
   
-  traces8 <- x$div_10m2Data100m2Data %>%
+  traces8 <- neon_div_object$div_10m2Data100m2Data %>%
     mutate(endDate = as.Date(endDate)) %>%
     dplyr::filter(targetTaxaPresent == "Y") %>%
     mutate(year = str_c(str_sub(endDate,1,4)))%>%
@@ -131,7 +109,7 @@ get_diversity_info <- function(neon_div_object,
            subplotID != "41")  %>%
     mutate(subplotID = str_sub(subplotID, 1, 4))
   
-  traces100s <- x$div_10m2Data100m2Data %>%
+  traces100s <- neon_div_object$div_10m2Data100m2Data %>%
     mutate(endDate = as.Date(endDate)) %>%
     dplyr::filter(targetTaxaPresent == "Y") %>%
     mutate(year = str_c(str_sub(endDate,1,4)))%>%
@@ -150,10 +128,16 @@ get_diversity_info <- function(neon_div_object,
   
   # aggregating at different scales ----------------------------------------------
   cover8_1m2 <- cover8 %>%
+    group_by(plotID, subplotID, taxonID, year, nativeStatusCode, scientificName, family) %>%
+    summarise(cover = sum(cover)) %>%
+    ungroup()%>%
     mutate(site = str_sub(plotID, 1,4)) %>%
     unk_fixer() #%>% get_diversity_info()
   
   cover8_1m2_10m2 <- rbind(cover8, traces8) %>%
+    group_by(plotID,subplotID, taxonID, year, nativeStatusCode, scientificName, family) %>%
+    summarise(cover = sum(cover)) %>%
+    ungroup()%>%
     mutate(site = str_sub(plotID, 1,4)) %>%
     unk_fixer()
   
@@ -161,7 +145,7 @@ get_diversity_info <- function(neon_div_object,
     mutate(subplotID = str_sub(subplotID, 1,2)) %>%
     rbind(traces100s) %>% # adding in the 100m2 subplots
     group_by(plotID, subplotID, year, taxonID) %>%
-    summarise(cover = max(cover), #max, mean? up for debate
+    summarise(cover = sum(cover), # this is summing together repeats from the rbinding
               scientificName = first(scientificName),
               nativeStatusCode = first(nativeStatusCode),
               family = first(family),
@@ -174,9 +158,67 @@ get_diversity_info <- function(neon_div_object,
   if(scale == "10m") full_on_cover <- cover8_1m2_10m2
   if(scale == "100m") full_on_cover <- cover4
   
+  return(full_on_cover)
+}
+
+# this creates a wide matrix of species cover or binary (presence/absence) values
+vegify <- function(neon_div_object, scale="plot", trace_cover = 0.5, binary=FALSE) {
   
+  if(!binary){
+    return(
+      neon_div_object %>%
+        get_longform_cover(scale = scale, trace_cover = trace_cover) %>%
+        mutate(p_sp_y = paste(plotID, subplotID, year, sep = "_")) %>%
+        dplyr::select(p_sp_y, taxonID, cover) %>%
+        na.omit() %>% # not sure how, but there are some NA's where they shouldn't be
+        pivot_wider(id_cols = p_sp_y, 
+                    names_from = taxonID, 
+                    values_from = cover,
+                    values_fill = list(cover=0)) %>%
+        tibble::column_to_rownames("p_sp_y") %>%
+        as.data.frame()
+    )
+  }else{
+      bin<-neon_div_object %>%
+        get_longform_cover(scale = scale, trace_cover = trace_cover) %>%
+        mutate(p_sp_y = paste(plotID, subplotID, year, sep = "_")) %>%
+        dplyr::select(p_sp_y, taxonID, cover) %>%
+        na.omit() %>% # not sure how, but there are some NA's where they shouldn't be
+        pivot_wider(id_cols = p_sp_y, 
+                    names_from = taxonID, 
+                    values_from = cover,
+                    values_fill = list(cover=0)) %>%
+        tibble::column_to_rownames("p_sp_y") %>%
+        as.data.frame() 
+        
+      return(ifelse(bin>0, 1,0))
+  }
+}
+
+# calculating various indexes at plot level at each timestep -------------------
+
+get_diversity_info <- function(neon_div_object, 
+                               scale = "plot",
+                               trace_cover = 0.5,
+                               families = "Poaceae",
+                               species = "Bromus tectorum") { 
+  # Parameters =================================================================
+  # scale options: "1m", "10m", "100m", "plot"
+    # 1 means aggregated by 1m2 subplots only,
+    # 10 means 1m2 and 10m2 subplots are aggregated
+    # 100 means each quadrant of the plot is aggregated...
+      # i.e. 2 1m2 and 10m2 subplots plus the 100m2 subplot
+    # plot means the whole plot is aggregated together
+  # trace cover is the cover value that is assigned to presence/absence
+    # detections in the 10 and 100 m2 suplots
+  # concatenate a list of family names for family cover, grass fam is default
+  # concatenate a list of species names in similar fashion
   
-  if(!"subplotID" %in% colnames(full_on_cover)) full_on_cover$subplotID <- "plot"
+  # Data wrangling =============================================================
+  
+  full_on_cover <- get_longform_cover(neon_div_object, scale = scale)
+  
+  # Native vs Invasive cover ===================================================
   
   n_i <- full_on_cover%>%
     group_by(plotID, subplotID, year) %>%
@@ -215,7 +257,7 @@ get_diversity_info <- function(neon_div_object,
            rel_cover_exotic = I,
            rel_cover_unk = UNK)
   
-  
+  # Cover by family ============================================================
   byfam <- full_on_cover%>%
     group_by(plotID, subplotID, year) %>%
     mutate(total_cover = sum(cover))%>%
@@ -226,11 +268,10 @@ get_diversity_info <- function(neon_div_object,
     ungroup() %>%
     mutate(rel_cover = cover/total_cover) %>%
     ungroup() %>%
-    filter(family != "")
-  
+    filter(family %in% families)
+    
   rcf<- byfam%>%
     dplyr::select(plotID, subplotID,year, family, rel_cover) %>%
-    filter(family %in% families)%>%
     pivot_wider(names_from = family,
                 names_prefix = "rc_",
                 values_from = (rel_cover),
@@ -238,17 +279,17 @@ get_diversity_info <- function(neon_div_object,
   
   cf<- byfam%>%
     dplyr::select(plotID, subplotID,year, family, cover) %>%
-    filter(family %in% families)%>%
     pivot_wider(names_from = family,
                 names_prefix = "cover_",
                 values_from = (cover),
                 values_fill = list(cover = 0))
   
+  # Cover by species ===========================================================
   bysp <- full_on_cover%>%
     group_by(plotID, subplotID, year) %>%
     mutate(total_cover = sum(cover))%>%
-    ungroup() %>%
-    group_by(plotID, subplotID,year, scientificName) %>%
+    ungroup() %>% 
+    group_by(plotID, subplotID, year, scientificName) %>%
     summarise(cover = sum(cover),
               total_cover = first(total_cover)) %>% 
     ungroup() %>%
@@ -260,12 +301,17 @@ get_diversity_info <- function(neon_div_object,
             species = str_split(scientificName,
                               pattern = " ",
                               simplify = TRUE)[,2],
-            gen_sp = str_c(genus, " ", species))
+            gen_sp = str_c(genus, " ", species)) %>%
+    filter(gen_sp %in% species)
   
   rc_sp <- bysp%>%
     dplyr::select(plotID, subplotID,year, gen_sp, rel_cover) %>%
-    filter(gen_sp %in% species)%>%
     mutate(gen_sp = str_replace(gen_sp, " ","_")) %>%
+    # the following 3 lines fix some kind of duplicate problem that happened here
+    # need to fix something upstream - jan 14 fixed it, need to test still
+    group_by(plotID, subplotID,year, gen_sp) %>% 
+    summarise(rel_cover = mean(rel_cover)) %>%
+    ungroup()%>%
     pivot_wider(names_from = gen_sp,
                 names_prefix = "rc_",
                 values_from = (rel_cover),
@@ -273,13 +319,18 @@ get_diversity_info <- function(neon_div_object,
   
   c_sp<- bysp%>%
     dplyr::select(plotID, subplotID,year, gen_sp, cover) %>%
-    filter(gen_sp %in% species)%>%
     mutate(gen_sp = str_replace(gen_sp, " ","_")) %>%
+    # the following 3 lines fix some kind of duplicate problem that happened here
+    # need to fix something upstream - jan 14 fixed it, need to test still
+    group_by(plotID, subplotID,year, gen_sp) %>%
+    summarise(cover = mean(cover)) %>% 
+    ungroup()%>%
     pivot_wider(names_from = gen_sp,
                 names_prefix = "cover_",
                 values_from = (cover),
                 values_fill = list(cover = 0))
   
+  # by family, divided by biogeographic origin =================================
   exotic_grass <- full_on_cover%>%
     group_by(plotID, subplotID, year) %>%
     mutate(total_cover = sum(cover))%>%
@@ -290,15 +341,11 @@ get_diversity_info <- function(neon_div_object,
     ungroup() %>%
     mutate(rel_cover = cover/total_cover) %>%
     ungroup() %>%
-    filter(family != "")
+    filter(family %in% families)
   
-  # what about having exotic forbs as well?
-  # maybe that's just exotic cover - exotic grass cover
   rc_ig<- exotic_grass%>%
     dplyr::select(plotID, subplotID,year, family, nativeStatusCode,rel_cover) %>%
     filter(nativeStatusCode == "I") %>%
-    filter(family %in% families)%>%
-    # filter(family == "Poaceae") %>%
     pivot_wider(names_from = family,
                 names_prefix = "rc_exotic_",
                 values_from = (rel_cover),
@@ -308,8 +355,6 @@ get_diversity_info <- function(neon_div_object,
   rc_ng<- exotic_grass%>%
     dplyr::select(plotID, subplotID,year, family, nativeStatusCode,rel_cover) %>%
     filter(nativeStatusCode == "N") %>%
-    filter(family %in% families)%>%
-    # filter(family == "Poaceae") %>%
     pivot_wider(names_from = family,
                 names_prefix = "rc_native_",
                 values_from = (rel_cover),
@@ -319,15 +364,22 @@ get_diversity_info <- function(neon_div_object,
   c_ig<- exotic_grass%>%
     dplyr::select(plotID, subplotID,year, family, nativeStatusCode,cover) %>%
     filter(nativeStatusCode == "I") %>%
-    # filter(family == "Poaceae") %>%
-    filter(family %in% families)%>%
     pivot_wider(names_from = family,
                 names_prefix = "cover_exotic_",
                 values_from = (cover),
                 values_fill = list(cover = 0)) %>%
     dplyr::select(-nativeStatusCode)
   
-  #diversity indexes splitting between native status
+  c_ng<- exotic_grass%>%
+    dplyr::select(plotID, subplotID,year, family, nativeStatusCode,cover) %>%
+    filter(nativeStatusCode == "N") %>%
+    pivot_wider(names_from = family,
+                names_prefix = "cover_native_",
+                values_from = (cover),
+                values_fill = list(cover = 0)) %>%
+    dplyr::select(-nativeStatusCode)
+  
+  # diversity indexes splitting between native status ==========================
   vegan_friendly_div <- full_on_cover %>%
     group_by(plotID, subplotID,taxonID, year, nativeStatusCode) %>%
     summarise(cover = sum(cover, na.rm = TRUE)) %>% 
@@ -342,8 +394,6 @@ get_diversity_info <- function(neon_div_object,
     group_by(plotID, subplotID, year, nativeStatusCode) %>%
     spread(taxonID, cover, fill=0) %>%
     ungroup()
-  
-  # summary(vegan_friendly_div)
   
   # note to self - hard code! gotta fix it
   vegan_friendly_div$shannon = diversity(vegan_friendly_div[5:ncol(vegan_friendly_div)]) 
@@ -390,23 +440,28 @@ get_diversity_info <- function(neon_div_object,
     left_join(c_ig, by = c("plotID", "subplotID", "year"))%>%
     left_join(cf, by = c("plotID", "subplotID", "year")) %>%
     left_join(rc_ng, by = c("plotID", "subplotID", "year")) %>%
+    left_join(c_ng, by = c("plotID", "subplotID", "year")) %>%
     left_join(rc_sp, by = c("plotID", "subplotID", "year")) %>%
     left_join(c_sp, by = c("plotID", "subplotID", "year")) %>%
     mutate(site = str_sub(plotID, 1,4),
-           scale = scale)%>%
+           scale = scale,
+           invaded = if_else(cover_exotic > 0, "invaded", "not_invaded"))%>%
     mutate(scale = factor(scale, levels = c("1m","10m","100m", "plot")))
   
-  # seems crazy, i know...
+  # seems crazy, i know... but those NAs should all definitely be zero
   final_table[is.na(final_table)] <- 0
     
   return(final_table)
 }
+
+# using the functions ==========================================================
 
 plot_level <- get_diversity_info(neon_div_object = x, scale = "plot")
 sp_level_1 <- get_diversity_info(x, "1m")
 sp_level_10 <- get_diversity_info(x, "10m")
 sp_level_100 <- get_diversity_info(x, "100m")
 all_scales <- rbind(plot_level, sp_level_1, sp_level_10, sp_level_100) 
+
 
 # write_csv(plot_level, "data/plot_level_diversity.csv")
 # write_csv(sp_level_1, "data/subplot_level_diversity_1.csv")

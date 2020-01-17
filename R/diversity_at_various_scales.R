@@ -164,6 +164,8 @@ vegify <- function(df) {
   )
 }
 
+vegify(cover8_1m2) -> vv
+
 # beta diversity calculations --------------------------------------------------
 sites <- unique(cover4$site)
 

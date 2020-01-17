@@ -17,10 +17,23 @@ all_scales %>%
   ylab("Native Species") +
   xlab("Exotic Species") +
   theme_pubr() +
-  facet_wrap(~site) +
+  # facet_wrap(~site) +
   theme(legend.position = c(1,1),
         legend.justification = c(1,1)) +
   ggsave("draft_figures/n_vs_e_nspp.png")
+
+
+all_scales %>%
+  # filter(scale == "1m") %>%
+  glm(nspp_native ~ nspp_exotic*scale, family = "poisson",
+              data = .) %>% 
+  summary
+
+all_scales %>%
+  # filter(scale == "1m") %>%
+  lme4::glmer(nspp_native ~ nspp_exotic*scale + (1|site), family = "poisson",
+      data = .) %>% 
+  summary
 
 ## plotting shannon diversity then doing an lmm -----
 all_scales %>%
@@ -110,26 +123,26 @@ plot_level %>%
   theme_pubr()+
   geom_smooth(se=F)
 
-plot_level %>%
+all_scales %>%
   filter(site != "JORN")%>%
-  ggplot(aes(x=rc_exotic_Poaceae)) +
-  geom_point(alpha = 0.25,aes(y=shannon_exotic), color="red") +
-  geom_point(alpha = 0.25,aes(y=shannon_native), color = "darkgreen") +
-  geom_point(alpha = 0.25,aes(y=shannon_total),color = "blue") +
-  facet_wrap(~site, scales = "free_y")+
+  ggplot(aes(x=rc_native_Poaceae)) +
+  geom_point(alpha = 0.25,aes(y=nspp_exotic), color="red") +
+  geom_point(alpha = 0.25,aes(y=nspp_native), color = "darkgreen") +
+  geom_point(alpha = 0.25,aes(y=nspp_total),color = "blue") +
+  facet_wrap(~scale, scales = "free_y")+
   theme_pubr()+
   ylab("shannon diversity")+
-  geom_smooth(se=F,aes(y=shannon_exotic), color = "red")+
-  geom_smooth(se=F,aes(y=shannon_native), color = "darkgreen")+
-  geom_smooth(se=F,aes(y=shannon_total), color = "blue")
+  geom_smooth(se=F,aes(y=nspp_exotic), color = "red")+
+  geom_smooth(se=F,aes(y=nspp_native), color = "darkgreen")+
+  geom_smooth(se=F,aes(y=nspp_total), color = "blue")
 
-plot_level %>%
+all_scales %>%
   filter(site != "JORN")%>%
   ggplot(aes(x=rc_native_Poaceae)) +
   geom_point(alpha = 0.25,aes(y=shannon_exotic), color="red") +
   geom_point(alpha = 0.25,aes(y=shannon_native), color = "darkgreen") +
   geom_point(alpha = 0.25,aes(y=shannon_total),color = "blue") +
-  facet_wrap(~site, scales = "free_y")+
+  facet_wrap(~scale, scales = "free_y")+
   theme_pubr()+
   ylab("shannon diversity")+
   geom_smooth(se=F,aes(y=shannon_exotic), color = "red")+
