@@ -27,10 +27,10 @@ x<-readRDS("data/diversity.RDS")}
 ###############################################
 source("R/unk_investigation.R")
 
-#################################################################
-# get a long dataframe for cover from the neon diversity object #
-# (used in all of the following functions)                      #
-#################################################################
+#######################################################################
+# get_longform_cover creates a long dataframe for cover from the neon # 
+# diversity object (used in all of the following functions)           #
+#######################################################################
 get_longform_cover <- function(neon_div_object, trace_cover=0.5, scale = "plot"){
   if(scale == "plot"){
     cover <- neon_div_object$div_1m2Data %>% 
@@ -172,11 +172,11 @@ get_longform_cover <- function(neon_div_object, trace_cover=0.5, scale = "plot")
   return(full_on_cover)
 }
 
-############################################################################
-# this creates a wide matrix of species cover or binary (presence/absence) #
-# values with the plot/subplot/year as rownames                            #
-# (useful for the vegan package, hence the name)                           #
-############################################################################
+##############################################################################
+# vegify creates a wide matrix of species cover or binary (presence/absence) #
+# values with the plot/subplot/year as rownames                              #
+# (useful for the vegan package, hence the name)                             #
+##############################################################################
 vegify <- function(neon_div_object, scale="plot", trace_cover = 0.5, binary=FALSE) {
   
   if(!binary){
@@ -210,9 +210,10 @@ vegify <- function(neon_div_object, scale="plot", trace_cover = 0.5, binary=FALS
   }
 }
 
-#############################################################################
-# calculating various indexes at the plot or subplot scale at each timestep #
-#############################################################################
+##############################################################################
+# get_diversity_info calculates various indexes at the plot or subplot scale # 
+# at each timestep for each plot                                             #
+##############################################################################
 get_diversity_info <- function(neon_div_object, 
                                scale = "plot",
                                trace_cover = 0.5,
