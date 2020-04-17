@@ -75,9 +75,9 @@ panel<- ggarrange(p1,p2, common.legend = T, legend = "top")+
   ggsave("draft_figures/scale_invaded.png", height = 4, width =7)
 
 
-# poisson 
+# poisson glm of nspp ==========================================================
 
-all_scales %>%
+pp1<-all_scales %>%
   ggplot(aes(x=nspp_exotic, y=nspp_native, color = scale)) +
   geom_point(alpha=0.5) +
   geom_smooth(method = "glm", 
@@ -93,17 +93,106 @@ all_scales %>%
   ggsave("draft_figures/n_vs_e_nspp.png")
 
 # nspp grasses
-# all_scales %>%
-#   ggplot(aes(x=nspp_exotic, y=nspp_native, color = scale)) +
-#   geom_point(alpha=0.5) +
-#   geom_smooth(method = "glm", 
-#               method.args = list(family = "poisson"),
-#               show.legend = F) +
-#   ggtitle("Native vs. Exotic Species Richness, (Poisson glm)") +
-#   ylab("Native Species") +
-#   xlab("Exotic Species") +
-#   theme_pubr() +
-#   # facet_wrap(~site) +
-#   theme(legend.position = c(1,1),
-#         legend.justification = c(1,1)) +
-#   ggsave("draft_figures/n_vs_e_nspp.png")
+pp2<-all_scales %>%
+  ggplot(aes(x=nspp_Poaceae_I, y=nspp_native, color = scale)) +
+  geom_point(alpha=0.5) +
+  geom_smooth(method = "glm",
+              method.args = list(family = "poisson"),
+              show.legend = F) +
+  ggtitle("Native vs. Exotic Grass Species Richness") +
+  ylab("Native Species") +
+  xlab("Exotic Grass Species") +
+  theme_pubr() +
+  # facet_wrap(~site) +
+  theme(legend.position = c(1,1),
+        legend.justification = c(1,1)) +
+  ggsave("draft_figures/n_vs_e_grass_nspp.png")
+
+pp_panel <- ggarrange(pp1,pp2, common.legend = TRUE) +
+  ggsave("draft_figures/nspp_panel.png", height=5, width=10)
+
+## exotic grasses monitoring ===================================================
+first_year_invaded <- get_longform_cover(x) %>%
+  filter(family == "Poaceae") %>%
+  filter(nativeStatusCode == "I") %>% 
+  mutate(year = as.numeric(year)) %>%
+  group_by(site, plotID) %>%
+  summarise(first_year = min(year),
+            number_of_years_invaded = length(unique(year)),
+            number_of_invasive_spp = length(unique(taxonID))) %>%
+  ungroup() %>%
+  left_join(plot_level %>% mutate(year = as.numeric(year)),
+            by = c("plotID", "site"))
+
+fyp <- first_year_invaded %>%
+  group_by(site, plotID, nspp_native) %>%
+  summarise(first_year = first(first_year)) %>%
+  ungroup() %>%
+  dplyr::rename(nspp_thatyear = nspp_native)
+
+plot_level %>%
+  mutate(year = as.numeric(year)) %>%
+  group_by(year, site) %>%
+  mutate(median_nspp = median(nspp_native)) %>%
+  ungroup() %>%
+  ggplot(aes(x=year, y=nspp_native)) +
+  facet_wrap(~site) +
+  geom_line(aes(group = plotID), alpha = 0.5) +
+  geom_line(aes(y=median_nspp,group = plotID), lwd = 1) +
+  geom_point(data =fyp, aes(x=first_year, y=nspp_thatyear), color="red")+
+  theme_classic() +
+  ylab("Native Species Richness") +
+  xlab("Year") +
+  ggtitle("Grass Invasion Detections", 
+          "Red dots indicate the first year an exotic grass was found at a plot") +
+  ggsave("draft_figures/invasion_detection.png", height = 5.5, width = 7)
+
+## two species ==============================================================
+erle <- get_longform_cover(readRDS("data/diversity.RDS")) %>%
+  filter(taxonID == "ERLE") %>%
+  mutate(year = as.numeric(year)) %>%
+  group_by(site, plotID) %>%
+  summarise(first_year = min(year),
+            number_of_years_invaded = length(unique(year)),
+            number_of_invasive_spp = length(unique(taxonID))) %>%
+  ungroup() %>%
+  left_join(plot_level %>% mutate(year = as.numeric(year)),
+            by = c("plotID", "site"))%>%
+  group_by(site, plotID, nspp_native) %>%
+  summarise(first_year = first(first_year)) %>%
+  ungroup() %>%
+  dplyr::rename(nspp_thatyear = nspp_native)
+
+brte <- get_longform_cover(readRDS("data/diversity.RDS")) %>%
+  filter(taxonID == "BRTE") %>%
+  mutate(year = as.numeric(year)) %>%
+  group_by(site, plotID) %>%
+  summarise(first_year = min(year),
+            number_of_years_invaded = length(unique(year)),
+            number_of_invasive_spp = length(unique(taxonID))) %>%
+  ungroup() %>%
+  left_join(plot_level %>% mutate(year = as.numeric(year)),
+            by = c("plotID", "site"))%>%
+  group_by(site, plotID, nspp_native) %>%
+  summarise(first_year = first(first_year)) %>%
+  ungroup() %>%
+  dplyr::rename(nspp_thatyear = nspp_native)
+
+plot_level %>%
+  mutate(year = as.numeric(year)) %>%
+  group_by(year, site) %>%
+  mutate(median_nspp = median(nspp_native)) %>%
+  ungroup() %>%
+  ggplot(aes(x=year, y=nspp_native)) +
+  facet_wrap(~site) +
+  geom_line(aes(group = plotID), alpha = 0.5) +
+  geom_line(aes(y=median_nspp,group = plotID), lwd = 1) +
+  geom_point(data =brte, aes(x=first_year, y=nspp_thatyear), color="red")+
+  geom_point(data =erle, aes(x=first_year, y=nspp_thatyear), color="blue")+
+  theme_classic() +
+  ylab("Native Species Richness") +
+  xlab("Year") +
+  ggtitle("Species Invasion Detections", 
+          paste0("Red dots indicate the first year cheatgrass was found at a plot\n",
+                 "Blue dots indicate the first year Lehman's lovegrass was found at a plot")) +
+  ggsave("draft_figures/invasion_detection_BRTE_ERLE.png", height = 5.5, width = 7)

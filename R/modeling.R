@@ -3,11 +3,6 @@ source("R/soil_chem.R")
 library(lme4)
 # basic relationships with diversity 
 # get traits with BIEN?
-# temporal stuff --  monitoring example
-# e.g first detections --
-# each site faceted, with lines for each plot, red dots for first detections
-# get nspp for family
-
 
 plot_level%>%
   lmerTest::lmer(shannon_native~shannon_exotic + (1|site), data=.) %>%
@@ -117,10 +112,7 @@ get_diversity_info(x, scale = "plot", species = "Vulpia octoflora") %>%
 
 # idea 2 ================
 # detecting first occurrence of species
-<<<<<<< HEAD
 # does diversity affect that first invasion? 
-=======
->>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
 
 first_year_bysp <- get_longform_cover(x) %>%
   filter(family != "") %>%
@@ -131,19 +123,125 @@ first_year_bysp <- get_longform_cover(x) %>%
             number_of_years_detected = n()) %>%
   ungroup()
 
+## monitoring plots, or something ==============================================
+## any exotic 
 first_year_invaded <- get_longform_cover(x) %>%
   filter(family != "") %>%
   filter(nativeStatusCode == "I") %>% 
   mutate(year = as.numeric(year)) %>%
   group_by(site, plotID) %>%
   summarise(first_year = min(year),
-<<<<<<< HEAD
             number_of_years_invaded = length(unique(year)),
             number_of_invasive_spp = length(unique(taxonID))) %>%
   ungroup() %>%
   left_join(plot_level %>% mutate(year = as.numeric(year)),
             by = c("plotID", "site"))
 
+fyp <- first_year_invaded %>%
+  group_by(site, plotID, nspp_native) %>%
+  summarise(first_year = first(first_year)) %>%
+  ungroup() %>%
+  dplyr::rename(nspp_thatyear = nspp_native)
+
+plot_level %>%
+  mutate(year = as.numeric(year)) %>%
+  ggplot(aes(x=year, y=nspp_native)) +
+    facet_wrap(~site) +
+    geom_line(aes(group = plotID)) +
+    geom_point(data =fyp, aes(x=first_year, y=nspp_thatyear), color="red") +
+    theme_classic()
+
+## exotic grasses ==============================================================
+first_year_invaded <- get_longform_cover(x) %>%
+  filter(family == "Poaceae") %>%
+  filter(nativeStatusCode == "I") %>% 
+  mutate(year = as.numeric(year)) %>%
+  group_by(site, plotID) %>%
+  summarise(first_year = min(year),
+            number_of_years_invaded = length(unique(year)),
+            number_of_invasive_spp = length(unique(taxonID))) %>%
+  ungroup() %>%
+  left_join(plot_level %>% mutate(year = as.numeric(year)),
+            by = c("plotID", "site"))
+
+fyp <- first_year_invaded %>%
+  group_by(site, plotID, nspp_native) %>%
+  summarise(first_year = first(first_year)) %>%
+  ungroup() %>%
+  dplyr::rename(nspp_thatyear = nspp_native)
+
+plot_level %>%
+  mutate(year = as.numeric(year)) %>%
+  group_by(year, site) %>%
+  mutate(median_nspp = median(nspp_native)) %>%
+  ungroup() %>%
+  ggplot(aes(x=year, y=nspp_native)) +
+  facet_wrap(~site) +
+  geom_line(aes(group = plotID), alpha = 0.5) +
+  geom_line(aes(y=median_nspp,group = plotID), lwd = 1) +
+  geom_point(data =fyp, aes(x=first_year, y=nspp_thatyear), color="red")+
+  theme_classic() +
+  ylab("Native Species Richness") +
+  xlab("Year") +
+  ggtitle("Grass Invasion Detections", 
+          "Red dots indicate the first year an exotic grass was found at a plot") +
+  ggsave("draft_figures/invasion_detection.png", height = 5.5, width = 7)
+
+## two species ==============================================================
+erle <- get_longform_cover(readRDS("data/diversity.RDS")) %>%
+  filter(taxonID == "ERLE") %>%
+  mutate(year = as.numeric(year)) %>%
+  group_by(site, plotID) %>%
+  summarise(first_year = min(year),
+            number_of_years_invaded = length(unique(year)),
+            number_of_invasive_spp = length(unique(taxonID))) %>%
+  ungroup() %>%
+  left_join(plot_level %>% mutate(year = as.numeric(year)),
+            by = c("plotID", "site"))%>%
+  group_by(site, plotID, nspp_native) %>%
+  summarise(first_year = first(first_year)) %>%
+  ungroup() %>%
+  dplyr::rename(nspp_thatyear = nspp_native)
+
+brte <- get_longform_cover(readRDS("data/diversity.RDS")) %>%
+  filter(taxonID == "BRTE") %>%
+  mutate(year = as.numeric(year)) %>%
+  group_by(site, plotID) %>%
+  summarise(first_year = min(year),
+            number_of_years_invaded = length(unique(year)),
+            number_of_invasive_spp = length(unique(taxonID))) %>%
+  ungroup() %>%
+  left_join(plot_level %>% mutate(year = as.numeric(year)),
+            by = c("plotID", "site"))%>%
+  group_by(site, plotID, nspp_native) %>%
+  summarise(first_year = first(first_year)) %>%
+  ungroup() %>%
+  dplyr::rename(nspp_thatyear = nspp_native)
+
+# fyp <- first_year_invaded %>%
+#   group_by(site, plotID, nspp_native) %>%
+#   summarise(first_year = first(first_year)) %>%
+#   ungroup() %>%
+#   dplyr::rename(nspp_thatyear = nspp_native)
+
+plot_level %>%
+  mutate(year = as.numeric(year)) %>%
+  group_by(year, site) %>%
+  mutate(median_nspp = median(nspp_native)) %>%
+  ungroup() %>%
+  ggplot(aes(x=year, y=nspp_native)) +
+  facet_wrap(~site) +
+  geom_line(aes(group = plotID), alpha = 0.5) +
+  geom_line(aes(y=median_nspp,group = plotID), lwd = 1) +
+  geom_point(data =brte, aes(x=first_year, y=nspp_thatyear), color="red")+
+  geom_point(data =erle, aes(x=first_year, y=nspp_thatyear), color="blue")+
+  theme_classic() +
+  ylab("Native Species Richness") +
+  xlab("Year") +
+  ggtitle("Species Invasion Detections", 
+          paste0("Red dots indicate the first year cheatgrass was found at a plot\n",
+                 "Blue dots indicate the first year Lehman's lovegrass was found at a plot")) +
+  ggsave("draft_figures/invasion_detection_BRTE_ERLE.png", height = 5.5, width = 7)
 
 
 # boxplot(first_year_invaded$nspp_native, plot_level$nspp_native)
@@ -229,20 +327,17 @@ ggplot(all_scales %>% filter(invaded != 0) %>%
        aes(x = nspp_total, y=invaded, color = scale)) +
   geom_smooth(method = "glm", method.args = list(family = "binomial"))
 
-=======
             number_of_years_invaded = n()) %>%
   ungroup()
 
 ggplot(first_year_invaded, aes(x = first_year)) +
   geom_density() +
   facet_wrap(~site)
->>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
 
 ggplot(first_year_bysp, aes(x = first_year, color = scientificName)) +
   geom_density() +
   facet_wrap(~site) +
   theme(legend.position = "none")
-<<<<<<< HEAD
 
 # modelling soil chem vs div ===================================================
 soil_cn %>%
@@ -293,5 +388,3 @@ soil_cn %>%
               data=., family="poisson") %>%
   # car::vif()
   summary
-=======
->>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e

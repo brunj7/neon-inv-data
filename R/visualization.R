@@ -105,41 +105,51 @@ plot_level %>%
   theme_pubr()+
   geom_smooth(se=F)
 
+# rc vs shannon ================================================================
+
+ggarrange(
 all_scales %>%
+  filter(site!="JORN") %>%
   ggplot(aes(x=rel_cover_exotic, y=shannon_total, color = scale)) +
   geom_point(alpha = 0.25) +
-<<<<<<< HEAD
-  # facet_wrap(~site, scales = "free_y")+
-=======
   facet_wrap(~site, scales = "free_y")+
->>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
   theme_pubr()+
-  geom_smooth(se=F)
-
+  geom_smooth(se=F) +
+  xlab("Relative Cover of All Exotic Species")+
+  ylab("Shannon Diversity")
+,
 all_scales %>%
+  filter(site!="JORN") %>%
   ggplot(aes(x=rc_exotic_Poaceae, y=shannon_total, color = scale)) +
   geom_point(alpha = 0.25) +
-<<<<<<< HEAD
-  # facet_wrap(~site, scales = "free_y")+
+  facet_wrap(~site)+
   theme_pubr()+
-  geom_smooth(se=F)
-
+  geom_smooth(se=F)+
+  ylab("Shannon Diversity") +
+  xlab("Relative Cover of Exotic Grasses")
+, common.legend = TRUE, nrow=2)
+# poisson rc vs nspp ===========================================================
 all_scales %>%
+  filter(site!="JORN") %>%
   ggplot(aes(x=rel_cover_exotic, y=nspp_total, color = scale)) +
   geom_point(alpha = 0.25) +
   facet_wrap(~site, scales = "free_y")+
   theme_pubr()+
-  geom_smooth(se = F)
+  geom_smooth(method = "glm", 
+              method.args = list(family = "poisson"),
+              show.legend = F)
 
 all_scales %>%
+  filter(site!="JORN") %>%
   ggplot(aes(x=rc_exotic_Poaceae, y=nspp_total, color = scale)) +
   geom_point(alpha = 0.25) +
-=======
->>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
   facet_wrap(~site, scales = "free_y")+
   theme_pubr()+
-  geom_smooth(se=F)
+  geom_smooth(method = "glm", 
+              method.args = list(family = "poisson"),
+              show.legend = F)
 
+# more all scale stuff ========================================================
 plot_level %>%
   ggplot(aes(x=rc_exotic_Poaceae, y=shannon_native, color = site)) +
   geom_point(alpha = 0.25) +
