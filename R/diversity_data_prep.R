@@ -37,10 +37,7 @@ get_longform_cover <- function(neon_div_object, trace_cover=0.5, scale = "plot")
       mutate(endDate = as.Date(endDate)) %>%
       dplyr::filter(divDataType == "plantSpecies") %>%
       mutate(year = str_c(str_sub(endDate,1,4)))%>% 
-<<<<<<< HEAD
       replace_na(list(percentCover=trace_cover)) %>% 
-=======
->>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
       group_by(plotID, subplotID, taxonID, year) %>%
       # dealing with the multiple bout issue by first getting the max cover
       # per sampling effort
@@ -87,7 +84,6 @@ get_longform_cover <- function(neon_div_object, trace_cover=0.5, scale = "plot")
   }
   
   cover8 <- neon_div_object$div_1m2Data %>% 
-<<<<<<< HEAD
     mutate(endDate = as.Date(endDate)) %>% 
     dplyr::filter(divDataType == "plantSpecies") %>%
     mutate(year = str_c(str_sub(endDate,1,4)))%>%
@@ -95,11 +91,9 @@ get_longform_cover <- function(neon_div_object, trace_cover=0.5, scale = "plot")
     # i.e. someone put the sp. code and forgot to fill in the number
     # putting as trace cover value
     replace_na(list(percentCover=trace_cover)) %>% 
-=======
     mutate(endDate = as.Date(endDate)) %>%
     dplyr::filter(divDataType == "plantSpecies") %>%
     mutate(year = str_c(str_sub(endDate,1,4)))%>%
->>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
     group_by(plotID, subplotID, taxonID, year) %>%
     # dealing with the multiple bout issue by first getting the mean cover
     # per sampling effort, without aggregating, then later we'll aggregate.
@@ -114,12 +108,10 @@ get_longform_cover <- function(neon_div_object, trace_cover=0.5, scale = "plot")
     filter(taxonID != "") %>%
     mutate(subplotID = str_sub(subplotID, 1, 4))
   
-<<<<<<< HEAD
-=======
+
   # 10m2,100m2 are given 0.5 (we can change later)
   # unique(x$div_10m2Data100m2Data$subplotID) # there are 12 subplots
   
->>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
   traces8 <- neon_div_object$div_10m2Data100m2Data %>%
     mutate(endDate = as.Date(endDate)) %>%
     dplyr::filter(targetTaxaPresent == "Y") %>%
@@ -329,7 +321,6 @@ get_diversity_info <- function(neon_div_object,
     ungroup() %>%
     mutate(rel_cover = cover/total_cover) %>%
     ungroup() %>%
-<<<<<<< HEAD
      mutate(gen = str_split(scientificName,
                       pattern = " ",
                       simplify = TRUE)[,1],
@@ -337,7 +328,6 @@ get_diversity_info <- function(neon_div_object,
                               pattern = " ",
                               simplify = TRUE)[,2],
             gen_sp = str_c(gen, " ", sp)) %>%
-=======
      mutate(genus = str_split(scientificName,
                       pattern = " ",
                       simplify = TRUE)[,1],
@@ -345,7 +335,6 @@ get_diversity_info <- function(neon_div_object,
                               pattern = " ",
                               simplify = TRUE)[,2],
             gen_sp = str_c(genus, " ", species)) %>%
->>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
     filter(gen_sp %in% species)
   
   rc_sp <- bysp%>%
@@ -501,11 +490,7 @@ get_diversity_info <- function(neon_div_object,
 # using the functions ==========================================================
 
 plot_level <- get_diversity_info(neon_div_object = x, scale = "plot")
-<<<<<<< HEAD
-sp_level_1 <- get_diversity_info(x, scale="1m")
-=======
 sp_level_1 <- get_diversity_info(x, "1m")
->>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
 sp_level_10 <- get_diversity_info(x, "10m")
 sp_level_100 <- get_diversity_info(x, "100m")
 all_scales <- rbind(plot_level, sp_level_1, sp_level_10, sp_level_100) 
