@@ -310,6 +310,20 @@ get_diversity_info <- function(neon_div_object,
                 values_from = (cover),
                 values_fill = list(cover = 0))
   
+  nspp_byfam <- full_on_cover%>%
+    group_by(plotID, subplotID, year) %>%
+    mutate(total_cover = sum(cover))%>%
+    ungroup() %>%
+    group_by(plotID, subplotID,year, family, nativeStatusCode) %>%
+    summarise(nspp = length(unique(scientificName))) %>%
+    ungroup() %>%
+    filter(nativeStatusCode != "UNK",
+           family %in% families) %>%
+    pivot_wider(names_from = c(family,nativeStatusCode),
+                names_prefix = "nspp_",
+                values_from = (nspp),
+                values_fill = list(nspp = 0))
+  
   # Cover by species ===========================================================
   bysp <- full_on_cover%>%
     group_by(plotID, subplotID, year) %>%
@@ -476,6 +490,7 @@ get_diversity_info <- function(neon_div_object,
     left_join(c_ng, by = c("plotID", "subplotID", "year")) %>%
     left_join(rc_sp, by = c("plotID", "subplotID", "year")) %>%
     left_join(c_sp, by = c("plotID", "subplotID", "year")) %>%
+    left_join(nspp_byfam, by = c("plotID", "subplotID", "year")) %>%
     mutate(site = str_sub(plotID, 1,4),
            scale = scale,
            invaded = if_else(cover_exotic > 0, "invaded", "not_invaded"))%>%

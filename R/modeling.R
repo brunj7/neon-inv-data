@@ -1,20 +1,22 @@
-<<<<<<< HEAD
 source("R/diversity_data_prep.R")
 source("R/soil_chem.R")
 library(lme4)
 # basic relationships with diversity 
-=======
+# get traits with BIEN?
+# temporal stuff --  monitoring example
+# e.g first detections --
+# each site faceted, with lines for each plot, red dots for first detections
+# get nspp for family
 
 
->>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
 plot_level%>%
   lmerTest::lmer(shannon_native~shannon_exotic + (1|site), data=.) %>%
   summary
 
 plot_level %>%
-  lme4::glmer(nspp_native ~ nspp_exotic + (1|site), data = ., family = "poisson") %>% 
+  lme4::glmer(nspp_native ~ nspp_exotic + (1|site), 
+              data = ., family = "poisson") %>% 
   summary
-<<<<<<< HEAD
 
 # interaction with scale
 all_scales %>%
@@ -25,8 +27,7 @@ all_scales %>%
 all_scales %>%
   lmerTest::lmer(shannon_native~shannon_exotic+scale + (1|site), data=.) %>%
   summary
-=======
->>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
+
 # trying to do what someone wrote in the google doc -----
 
 plot_level%>%
