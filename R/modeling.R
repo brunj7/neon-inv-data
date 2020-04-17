@@ -1,5 +1,12 @@
+<<<<<<< HEAD
+source("R/diversity_data_prep.R")
+source("R/soil_chem.R")
+library(lme4)
+# basic relationships with diversity 
+=======
 
 
+>>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
 plot_level%>%
   lmerTest::lmer(shannon_native~shannon_exotic + (1|site), data=.) %>%
   summary
@@ -7,6 +14,19 @@ plot_level%>%
 plot_level %>%
   lme4::glmer(nspp_native ~ nspp_exotic + (1|site), data = ., family = "poisson") %>% 
   summary
+<<<<<<< HEAD
+
+# interaction with scale
+all_scales %>%
+  lme4::glmer(nspp_native ~ nspp_exotic +scale + (1|site), 
+              data = ., family = "poisson") %>% 
+  summary
+
+all_scales %>%
+  lmerTest::lmer(shannon_native~shannon_exotic+scale + (1|site), data=.) %>%
+  summary
+=======
+>>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
 # trying to do what someone wrote in the google doc -----
 
 plot_level%>%
@@ -96,6 +116,10 @@ get_diversity_info(x, scale = "plot", species = "Vulpia octoflora") %>%
 
 # idea 2 ================
 # detecting first occurrence of species
+<<<<<<< HEAD
+# does diversity affect that first invasion? 
+=======
+>>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
 
 first_year_bysp <- get_longform_cover(x) %>%
   filter(family != "") %>%
@@ -112,14 +136,161 @@ first_year_invaded <- get_longform_cover(x) %>%
   mutate(year = as.numeric(year)) %>%
   group_by(site, plotID) %>%
   summarise(first_year = min(year),
+<<<<<<< HEAD
+            number_of_years_invaded = length(unique(year)),
+            number_of_invasive_spp = length(unique(taxonID))) %>%
+  ungroup() %>%
+  left_join(plot_level %>% mutate(year = as.numeric(year)),
+            by = c("plotID", "site"))
+
+
+
+# boxplot(first_year_invaded$nspp_native, plot_level$nspp_native)
+# boxplot(first_year_invaded$shannon_native, plot_level$shannon_native)
+
+# getting year before diversity
+prev_year_div <- all_scales %>% 
+  mutate(year = as.numeric(year)) %>%
+  filter(nspp_exotic == 0) %>%
+  dplyr::select(year, plotID, scale, subplotID, site,
+                prev_shannon_total=shannon_total, 
+                prev_nspp_total=nspp_total, 
+                prev_shannon_native=shannon_native, 
+                prev_nspp_native = nspp_native) %>%
+  mutate(year = year+1)
+
+x<-  all_scales%>% 
+              mutate(year = as.numeric(year)) %>%
+  inner_join(prev_year_div,
+            by = c("plotID", "subplotID", "year", "scale", "site"))
+
+x%>%
+  mutate(invaded = ifelse(invaded=="invaded",1,0), 
+         prev_shannon_native = scale(prev_shannon_native)) %>%
+  lme4::glmer(invaded ~ prev_shannon_native*scale +(1|site), 
+              data = ., family = "binomial")%>%
+  summary
+
+x%>%
+  mutate(invaded = ifelse(invaded=="invaded",1,0), 
+         prev_nspp_native = scale(prev_nspp_native)) %>%
+  lme4::glmer(invaded ~ prev_nspp_native*scale +(1|site), 
+              data = ., family = "binomial")%>%
+  summary
+
+p1<-ggplot(prev_year_div %>% filter(invaded != 0) %>%
+         mutate(invaded = ifelse(invaded=="invaded", 1,0)), 
+       aes(x = prev_nspp_native, y=invaded, color = scale)) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial")) +
+  theme_classic()
+
+
+plot_level %>%
+  mutate(invaded = as.factor(invaded)) %>%
+  lme4::glmer(invaded ~ shannon_total  +(1|site), 
+              data = ., family = "binomial")%>%
+  summary
+
+# models having convergence troubles
+all_scales %>%
+  mutate(invaded = as.factor(invaded)) %>%
+  lme4::glmer(invaded ~ shannon_total * scale +(1|site), 
+              data = ., family = "binomial")%>%
+  summary
+
+all_scales %>%
+  mutate(invaded = as.factor(invaded),
+         nspp_native = scale(nspp_native)) %>%
+  lme4::glmer(invaded ~ nspp_native *scale+ (1|site), 
+              data = ., family = "binomial")%>%
+  summary
+
+# money plot
+p2<-ggplot(all_scales %>% filter(invaded != 0) %>%
+         mutate(invaded = ifelse(invaded=="invaded", 1,0)), 
+       aes(x = nspp_native, y=invaded, color = scale)) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial")) +
+  theme_classic()
+
+library(ggpubr)
+ggarrange(p1,p2)
+
+# invaded locations vs uninvaded locations - temporal patterns
+# invaded vs uninvaded hypothesis test - slope values from rate of change
+
+ggplot(all_scales %>% filter(invaded != 0) %>%
+         mutate(invaded = ifelse(invaded=="invaded", 1,0)), 
+       aes(x = shannon_total, y=invaded, color = scale)) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"))
+
+ggplot(all_scales %>% filter(invaded != 0) %>%
+         mutate(invaded = ifelse(invaded=="invaded", 1,0)), 
+       aes(x = nspp_total, y=invaded, color = scale)) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"))
+
+=======
             number_of_years_invaded = n()) %>%
   ungroup()
 
 ggplot(first_year_invaded, aes(x = first_year)) +
   geom_density() +
   facet_wrap(~site)
+>>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
 
 ggplot(first_year_bysp, aes(x = first_year, color = scientificName)) +
   geom_density() +
   facet_wrap(~site) +
   theme(legend.position = "none")
+<<<<<<< HEAD
+
+# modelling soil chem vs div ===================================================
+soil_cn %>%
+  left_join(first_year_invaded) %>%
+  lme4::glmer(number_of_years_invaded ~ 
+                organicCPercent +
+                shannon_native + 
+                shannon_exotic +
+                (1|site), 
+              data=., 
+              family="poisson") %>%
+  summary
+
+soil_cn %>%
+  left_join(first_year_invaded) %>%
+  lmerTest::lmer(shannon_native ~
+                number_of_years_invaded +
+                organicCPercent +
+                shannon_exotic +
+                (1|site), 
+              data=.) %>%
+  summary
+
+soil_cn %>%
+  left_join(first_year_invaded) %>%
+  lme4::glmer(nspp_native ~
+                   number_of_years_invaded +
+                   organicCPercent +
+                   nspp_exotic +
+                   (1|site), 
+                 data=., family="poisson") %>%
+  summary
+
+soil_cn %>%
+  left_join(first_year_invaded) %>%
+  lme4::glmer(number_of_invasive_spp ~ shannon_native + shannon_exotic +
+                soil_cn +
+                (1|site), 
+              data=., family="poisson") %>%
+  # car::vif()
+  summary
+
+soil_cn %>%
+  left_join(first_year_invaded) %>%
+  lme4::glmer(number_of_invasive_spp ~ nspp_native + nspp_exotic+
+                soil_cn+
+                (1|site), 
+              data=., family="poisson") %>%
+  # car::vif()
+  summary
+=======
+>>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e

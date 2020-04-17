@@ -22,7 +22,10 @@ all_scales %>%
         legend.justification = c(1,1)) +
   ggsave("draft_figures/n_vs_e_nspp.png")
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
 all_scales %>%
   # filter(scale == "1m") %>%
   glm(nspp_native ~ nspp_exotic*scale, family = "poisson",
@@ -105,13 +108,34 @@ plot_level %>%
 all_scales %>%
   ggplot(aes(x=rel_cover_exotic, y=shannon_total, color = scale)) +
   geom_point(alpha = 0.25) +
+<<<<<<< HEAD
+  # facet_wrap(~site, scales = "free_y")+
+=======
   facet_wrap(~site, scales = "free_y")+
+>>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
   theme_pubr()+
   geom_smooth(se=F)
 
 all_scales %>%
   ggplot(aes(x=rc_exotic_Poaceae, y=shannon_total, color = scale)) +
   geom_point(alpha = 0.25) +
+<<<<<<< HEAD
+  # facet_wrap(~site, scales = "free_y")+
+  theme_pubr()+
+  geom_smooth(se=F)
+
+all_scales %>%
+  ggplot(aes(x=rel_cover_exotic, y=nspp_total, color = scale)) +
+  geom_point(alpha = 0.25) +
+  facet_wrap(~site, scales = "free_y")+
+  theme_pubr()+
+  geom_smooth(se = F)
+
+all_scales %>%
+  ggplot(aes(x=rc_exotic_Poaceae, y=nspp_total, color = scale)) +
+  geom_point(alpha = 0.25) +
+=======
+>>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
   facet_wrap(~site, scales = "free_y")+
   theme_pubr()+
   geom_smooth(se=F)
