@@ -388,3 +388,22 @@ soil_cn %>%
               data=., family="poisson") %>%
   # car::vif()
   summary
+
+
+
+# modelling, accounting for year to year temporal autocorrelation ==============
+library(nlme)
+d<- plot_level %>%
+  mutate(year = as.numeric(year),
+         p_ex_sp = nspp_exotic/nspp_total)
+
+lme(p_ex_sp ~ year, random =~year|plotID,
+    correlation = corAR1(form = ~year|plotID),
+    data = d) %>%
+  summary
+
+library(mgcv)
+gamm(p_ex_sp ~ s(year) + ... , data=d,random = ~1|plotID)
+
+library(forecast)
+forecast::Acf(d)

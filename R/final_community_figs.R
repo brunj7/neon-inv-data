@@ -2,22 +2,33 @@
 source("R/diversity_data_prep.R")
 library(lme4)
 library(ggpubr)
+library(ggthemes)
 library(car)
 
 # data mongering ===============================================================
 
-prev_year_div <- all_scales %>% 
-  mutate(year = as.numeric(year)) %>%
-  filter(nspp_exotic == 0) %>%
-  dplyr::select(year, plotID, scale, subplotID, site,
-                prev_shannon_total=shannon_total, 
-                prev_nspp_total=nspp_total, 
-                prev_shannon_native=shannon_native, 
-                prev_nspp_native = nspp_native) %>%
-  mutate(year = year+1) %>%
-  left_join(all_scales%>% 
-              mutate(year = as.numeric(year)),
-            by = c("plotID", "subplotID", "year", "scale", "site"))
+uninvaded_sites <- all_scales %>% 
+  mutate(year = as.numeric(year),
+         uniqueid = paste0(year+1,plotID,scale,subplotID, site)) %>%
+  filter(nspp_exotic == 0) %>% 
+  dplyr::select(year, plotID, scale, subplotID, site,uniqueid, 
+                shannon_total, nspp_total, shannon_native, nspp_native)
+
+uniqueids <- uninvaded_sites$uniqueid
+
+next_year<-all_scales %>% 
+  mutate(year = as.numeric(year),
+         uniqueid = paste0(year,plotID,scale,subplotID, site))%>%
+  filter(uniqueid %in% uniqueids) %>%
+  dplyr::select(uniqueid, next_shannon_total=shannon_total, 
+                next_nspp_total=nspp_total, 
+                next_nspp_exotic = nspp_exotic,
+                next_shannon_native=shannon_native, 
+                next_nspp_native = nspp_native,
+                next_shannon_exotic = shannon_exotic) %>%
+  mutate(invaded = ifelse(next_nspp_exotic > 0, 1, 0))
+
+prev_year_div <- left_join(next_year, uninvaded_sites)
 
 # models =======================================================================
 
@@ -37,10 +48,8 @@ vif(m1)
 AIC(m0,m1)
 anova(m0,m1)
 
-prev_year_div%>%
-  mutate(invaded = ifelse(invaded=="invaded",1,0), 
-         prev_nspp_native = scale(prev_nspp_native)) %>%
-  lme4::glmer(invaded ~ prev_nspp_native+scale +(1|site), 
+prev_year_div %>%
+  lme4::glmer(invaded ~ nspp_native*scale +(1|site), 
               data = ., family = "binomial")%>%
   summary
 
@@ -58,35 +67,49 @@ p2<-ggplot(all_scales %>% filter(invaded != 0) %>%
            aes(x = nspp_native, y=invaded, color = scale)) +
   geom_smooth(method = "glm", method.args = list(family = "binomial")) +
   theme_classic() +
+  scale_color_colorblind() +
   xlab("Native species present") +
-  ylab("P(Invaded)")
+  ylab("P(Invaded)") +
+  ggsave("draft_figures/p_invaded.png")
 
 
-p1<-ggplot(prev_year_div %>% filter(invaded != 0) %>%
-             mutate(invaded = ifelse(invaded=="invaded", 1,0)), 
-           aes(x = prev_nspp_native, y=invaded, color = scale)) +
+p1<-ggplot(prev_year_div, 
+           aes(x = nspp_native, y=invaded, color = scale)) +
   geom_smooth(method = "glm", method.args = list(family = "binomial")) +
   theme_classic()+
+  scale_color_colorblind() +
   xlab("Native species present in the previous year")+
   ylab("P(Invaded)")
 
+p3<-ggplot(prev_year_div, 
+           aes(x = nspp_native, y=next_nspp_exotic, color = scale)) +
+  geom_smooth(method = "glm", method.args = list(family = "poisson")) +
+  theme_classic()+
+  scale_color_colorblind() +
+  xlab("Native species present (uninvaded)")+
+  ylab("Exotic species present in the following year");p3
 
-panel<- ggarrange(p1,p2, common.legend = T, legend = "top")+
+
+panel<- ggarrange(p3,p2, common.legend = T, legend = "top")+
   ggsave("draft_figures/scale_invaded.png", height = 4, width =7)
 
 
 # poisson glm of nspp ==========================================================
 
+glm(nspp_native ~ nspp_exotic*scale, dat=all_scales, family = "quasipoisson") %>% summary()
+nb_mod<-MASS::glm.nb(nspp_native ~ nspp_exotic*scale, dat=all_scales)
+
 pp1<-all_scales %>%
-  ggplot(aes(x=nspp_exotic, y=nspp_native, color = scale)) +
+  ggplot(aes(x=nspp_native, y=nspp_exotic, color = scale)) +
   geom_point(alpha=0.5) +
   geom_smooth(method = "glm", 
-              method.args = list(family = "poisson"),
+              method.args = list(family = "quasipoisson"),
               show.legend = F) +
   ggtitle("Native vs. Exotic Species Richness, (Poisson glm)") +
-  ylab("Native Species") +
-  xlab("Exotic Species") +
+  ylab("Exotic Species") +
+  xlab("Native Species") +
   theme_pubr() +
+  scale_color_colorblind() +
   # facet_wrap(~site) +
   theme(legend.position = c(1,1),
         legend.justification = c(1,1)) +

@@ -22,10 +22,6 @@ all_scales %>%
         legend.justification = c(1,1)) +
   ggsave("draft_figures/n_vs_e_nspp.png")
 
-<<<<<<< HEAD
-=======
-
->>>>>>> f152fc0b2bac989ba3f0433668bf170dffac2f6e
 all_scales %>%
   # filter(scale == "1m") %>%
   glm(nspp_native ~ nspp_exotic*scale, family = "poisson",
@@ -108,46 +104,45 @@ plot_level %>%
 # rc vs shannon ================================================================
 
 ggarrange(
-all_scales %>%
-  filter(site!="JORN") %>%
-  ggplot(aes(x=rel_cover_exotic, y=shannon_total, color = scale)) +
-  geom_point(alpha = 0.25) +
-  facet_wrap(~site, scales = "free_y")+
-  theme_pubr()+
-  geom_smooth(se=F) +
-  xlab("Relative Cover of All Exotic Species")+
-  ylab("Shannon Diversity")
-,
-all_scales %>%
-  filter(site!="JORN") %>%
-  ggplot(aes(x=rc_exotic_Poaceae, y=shannon_total, color = scale)) +
-  geom_point(alpha = 0.25) +
-  facet_wrap(~site)+
-  theme_pubr()+
-  geom_smooth(se=F)+
-  ylab("Shannon Diversity") +
-  xlab("Relative Cover of Exotic Grasses")
-, common.legend = TRUE, nrow=2)
+  all_scales %>%
+    filter(site!="JORN") %>%
+    ggplot(aes(x=rel_cover_exotic, y=shannon_total, color = scale)) +
+    geom_point(alpha = 0.25) +
+    facet_wrap(~site, scales = "free_y")+
+    theme_pubr()+
+    geom_smooth(se=F) +
+    xlab("Relative Cover of All Exotic Species")+
+    ylab("Shannon Diversity")
+  ,
+  all_scales %>%
+    filter(site!="JORN") %>%
+    ggplot(aes(x=rc_exotic_Poaceae, y=shannon_total, color = scale)) +
+    geom_point(alpha = 0.25) +
+    facet_wrap(~site)+
+    theme_pubr()+
+    geom_smooth(se=F)+
+    ylab("Shannon Diversity") +
+    xlab("Relative Cover of Exotic Grasses")
+  , common.legend = TRUE, nrow=2) +
+  ggsave('draft_figures/faceted_shannon_vs_ex_p_smoothers.png')
 # poisson rc vs nspp ===========================================================
+ggarrange(
 all_scales %>%
   filter(site!="JORN") %>%
   ggplot(aes(x=rel_cover_exotic, y=nspp_total, color = scale)) +
   geom_point(alpha = 0.25) +
   facet_wrap(~site, scales = "free_y")+
   theme_pubr()+
-  geom_smooth(method = "glm", 
-              method.args = list(family = "poisson"),
-              show.legend = F)
-
+  geom_smooth(se = F)
+,
 all_scales %>%
   filter(site!="JORN") %>%
   ggplot(aes(x=rc_exotic_Poaceae, y=nspp_total, color = scale)) +
   geom_point(alpha = 0.25) +
   facet_wrap(~site, scales = "free_y")+
   theme_pubr()+
-  geom_smooth(method = "glm", 
-              method.args = list(family = "poisson"),
-              show.legend = F)
+  geom_smooth(se = F)
+, common.legend = TRUE, nrow=2)
 
 # more all scale stuff ========================================================
 plot_level %>%
@@ -204,3 +199,32 @@ plot_level %>%
   ggplot(aes(x=rc_Poaceae, y = rc_exotic_Poaceae)) +
   geom_point() +
   facet_wrap(~site)
+
+# time_series =================================================================
+
+plot_level %>%
+  mutate(year = as.numeric(year)) %>%
+  ggplot(aes(x=year, y=nspp_exotic/nspp_total)) +
+    facet_wrap(~site, scales="free_y") +
+    geom_point() +
+    geom_smooth()+
+    geom_line(aes(group = plotID)) +
+    theme_classic()
+
+plot_level %>%
+  mutate(year = as.numeric(year)) %>%
+  ggplot(aes(x=year, y=rel_cover_exotic)) +
+  facet_wrap(~site) +
+  geom_point() +
+  geom_smooth()+
+  geom_line(aes(group = plotID)) +
+  theme_classic()
+
+plot_level %>%
+  mutate(year = as.numeric(year)) %>%
+  ggplot(aes(x=year, y=rc_exotic_Poaceae)) +
+  facet_wrap(~site) +
+  geom_point() +
+  geom_smooth()+
+  geom_line(aes(group = plotID)) +
+  theme_classic()
