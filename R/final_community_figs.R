@@ -30,15 +30,15 @@ next_year<-all_scales %>%
 
 prev_year_div <- left_join(next_year, uninvaded_sites)
 
-# models =======================================================================
+# binomial models ==============================================================
 
-m0<-all_scales %>%
+ma0<-all_scales %>%
   mutate(invaded = ifelse(invaded=="invaded",1,0)) %>%
   lme4::glmer(invaded ~ nspp_native * scale+ (1|site), 
               data = ., family = "binomial")
 
 # this is the ggplot model, basically... not sure how to compare glm and glmer
-m1<-all_scales %>%
+ma1<-all_scales %>%
   mutate(invaded = ifelse(invaded=="invaded",1,0)) %>%
   glm(invaded ~ nspp_native * scale, 
               data = ., family = "binomial")
@@ -48,72 +48,103 @@ vif(m1)
 AIC(m0,m1)
 anova(m0,m1)
 
-prev_year_div %>%
+mc1<- prev_year_div %>%
   lme4::glmer(invaded ~ nspp_native*scale +(1|site), 
-              data = ., family = "binomial")%>%
-  summary
+              data = ., family = "binomial")
 
-prev_year_div%>%
-  mutate(invaded = ifelse(invaded=="invaded",1,0), 
-         prev_nspp_native = scale(prev_nspp_native)) %>%
-  glm(invaded ~ prev_nspp_native+scale, 
-              data = ., family = "binomial")%>%
-  summary
+mc0<-prev_year_div%>%
+  mutate(nspp_native = scale(nspp_native)) %>%
+  glm(invaded ~ nspp_native*scale, 
+              data = ., family = "binomial")
+
+# inv_mod<- lme4::glmer(invaded ~ nspp_native*scale +(1|site), 
+#               data = prev_year_div, family = "binomial")
+# 
+# library(effects)
+# plot(allEffects(inv_mod))
+
+# count models =================================================================
+
+# no convergence
+# mb0<-all_scales %>%
+#   lme4::glmer(nspp_exotic ~ nspp_native * scale+ (1|site), 
+#               data = ., family = "poisson")
+
+mb0<-all_scales %>%
+  glm(nspp_exotic ~ nspp_native * scale, 
+      data = ., family = "quasipoisson")
+#not sure what to think about this stuff
+summary(mb0)
+md0<-prev_year_div%>%
+  glm(next_nspp_exotic ~ nspp_native*scale, 
+      data = ., family = "quasipoisson")
+summary(md0)
+Anova(md0)
 
 
 # money plots ==================================================================
-p2<-ggplot(all_scales %>% filter(invaded != 0) %>%
+p1<-ggplot(all_scales %>% 
              mutate(invaded = ifelse(invaded=="invaded", 1,0)), 
            aes(x = nspp_native, y=invaded, color = scale)) +
   geom_smooth(method = "glm", method.args = list(family = "binomial")) +
   theme_classic() +
+  theme(legend.position = c(1,0),
+        legend.justification = c(1,0))+
   scale_color_colorblind() +
-  xlab("Native species present") +
+  xlab("Native Species Richness") +
   ylab("P(Invaded)") +
   ggsave("draft_figures/p_invaded.png")
 
+# glm(nspp_native ~ nspp_exotic*scale, dat=all_scales, family = "quasipoisson") %>% summary()
+# nb_mod<-MASS::glm.nb(nspp_native ~ nspp_exotic*scale, dat=all_scales)
 
-p1<-ggplot(prev_year_div, 
-           aes(x = nspp_native, y=invaded, color = scale)) +
-  geom_smooth(method = "glm", method.args = list(family = "binomial")) +
-  theme_classic()+
-  scale_color_colorblind() +
-  xlab("Native species present in the previous year")+
-  ylab("P(Invaded)")
-
-p3<-ggplot(prev_year_div, 
-           aes(x = nspp_native, y=next_nspp_exotic, color = scale)) +
-  geom_smooth(method = "glm", method.args = list(family = "poisson")) +
-  theme_classic()+
-  scale_color_colorblind() +
-  xlab("Native species present (uninvaded)")+
-  ylab("Exotic species present in the following year");p3
-
-
-panel<- ggarrange(p3,p2, common.legend = T, legend = "top")+
-  ggsave("draft_figures/scale_invaded.png", height = 4, width =7)
-
-
-# poisson glm of nspp ==========================================================
-
-glm(nspp_native ~ nspp_exotic*scale, dat=all_scales, family = "quasipoisson") %>% summary()
-nb_mod<-MASS::glm.nb(nspp_native ~ nspp_exotic*scale, dat=all_scales)
-
-pp1<-all_scales %>%
+p2<-all_scales %>%
   ggplot(aes(x=nspp_native, y=nspp_exotic, color = scale)) +
-  geom_point(alpha=0.5) +
+  # geom_point(alpha=0.5) +
   geom_smooth(method = "glm", 
               method.args = list(family = "quasipoisson"),
               show.legend = F) +
-  ggtitle("Native vs. Exotic Species Richness, (Poisson glm)") +
-  ylab("Exotic Species") +
-  xlab("Native Species") +
+  # ggtitle("Native vs. Exotic Species Richness, (Quasipoisson glm)") +
+  ylab("Exotic Species Richness") +
+  xlab("Native Species Richness") +
   theme_pubr() +
   scale_color_colorblind() +
   # facet_wrap(~site) +
   theme(legend.position = c(1,1),
         legend.justification = c(1,1)) +
   ggsave("draft_figures/n_vs_e_nspp.png")
+
+
+p3<-ggplot(prev_year_div, 
+           aes(x = nspp_native, y=invaded, color = scale)) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial")) +
+  theme_classic()+
+  theme(legend.position = "none")+
+  #geom_line(aes(y=predict(inv_mod,type="response", re.form=NA)))+
+  scale_color_colorblind() +
+  xlab("Native species Richness (Uninvaded Sites, Year 1)")+
+  ylab("P(Invaded); Year 2")
+
+p4<-ggplot(prev_year_div, 
+           aes(x = nspp_native, y=next_nspp_exotic, color = scale)) +
+  geom_smooth(method = "glm", method.args = list(family = "poisson")) +
+  theme_classic()+
+  theme(legend.position = "none")+
+  scale_color_colorblind() +
+  geom_hline(yintercept = 1, lty=2, color = "grey80")+
+  scale_y_continuous(breaks = c(0,1,2,4,6,8))+
+  xlab("Native Species Richness (Uninvaded Sites, Year 1)")+
+  ylab("Exotic Species Richness; Year 2")
+
+
+
+
+panel<- ggarrange(p2,p1,p4,p3, labels="auto", label.x = 0.15) +
+  ggsave("draft_figures/scale_invaded.png", height = 8.5, width =8.5)
+
+
+# poisson glm of nspp ==========================================================
+
 
 # nspp grasses
 pp2<-all_scales %>%
