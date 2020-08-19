@@ -38,6 +38,8 @@ rsconnect/
 # Mac
 *.DS_Store
 
-# RStudio
+# RStudios
 .Rproj.user
 
+# NEON Token
+neon_token_source.R
