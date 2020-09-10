@@ -68,9 +68,9 @@ crs1b <- '+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0
 #   summarise(mean = mean(percentCover))
 
 source("R/diversity_data_prep.R")
-
-inv<- plot_level %>%
-  dplyr::select(plotID, cover_exotic, year)
+# 
+# inv<- plot_level %>%
+#   dplyr::select(plotID, cover_exotic, year)
 
 cover2<- x$div_1m2Data %>%
   dplyr::select(decimalLongitude, 
@@ -125,6 +125,9 @@ cover_sf2016jorn <- cover_sf2016 %>%
 ###
 #bring in roads data
 #setwd("D:/Arquivos_pessoais/?rea de Trabalho/NEON")
+
+unzip(zipfile = "data/NEON_roads_data-20200130T165308Z-001.zip",
+      exdir = "data")
 
 road_path <- "data/NEON_roads_data/"
 
@@ -311,7 +314,7 @@ summary(m1 <- glm(nspp_exotic ~ dist_to_road.Z, family="poisson", data=coverdist
 coef(m1)
 
 
-ggplot(coverdist_allsites, aes(x=dist_to_road.Z, y=nspp_exotic)) +
+p1<- ggplot(coverdist_allsites, aes(x=dist_to_road, y=nspp_exotic)) +
   geom_point(size = 2, alpha=0.7) +
   geom_rug(sides = "b", 
            alpha = 0.7, 
@@ -319,7 +322,7 @@ ggplot(coverdist_allsites, aes(x=dist_to_road.Z, y=nspp_exotic)) +
   geom_smooth(method = "glm", method.args = list(family = "poisson"), se=TRUE)+
   scale_color_viridis(discrete = TRUE, option = "D") +
   theme_classic() +
-  labs(x ="Distance to nearest road (unitless)", y = "Richness of invasive species",
+  labs(x ="Distance to nearest road (m)", y = "Richness of invasive species (2016)",
        color = "Sites")+
   theme(
     axis.title.x = element_text(vjust=-0.35),
@@ -332,7 +335,81 @@ ggplot(coverdist_allsites, aes(x=dist_to_road.Z, y=nspp_exotic)) +
     legend.margin = margin(6, 6, 6, 6),
     legend.title = element_text(face = "bold"),
     panel.border = element_rect(colour = "black", fill=NA)
-  ) 
+  )
+p2<- ggplot(coverdist_allsites, aes(x=dist_to_road, y=nspp_native)) +
+  geom_point(size = 2, alpha=0.7) +
+  geom_rug(sides = "b", 
+           alpha = 0.7, 
+           position = "jitter", length = unit(0.02, "npc")) +
+  geom_smooth(method = "glm", method.args = list(family = "poisson"), se=TRUE)+
+  scale_color_viridis(discrete = TRUE, option = "D") +
+  theme_classic() +
+  labs(x ="Distance to nearest road (m)", y = "Richness of invasive species (2016)",
+       color = "Sites")+
+  theme(
+    axis.title.x = element_text(vjust=-0.35),
+    axis.title.y = element_text(vjust=0.35) ,
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    legend.position = c(.95, .95),
+    legend.justification = c("right", "top"),
+    legend.box.just = "right",
+    legend.margin = margin(6, 6, 6, 6),
+    legend.title = element_text(face = "bold"),
+    panel.border = element_rect(colour = "black", fill=NA)
+  )
+
+p3<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=cover_exotic)) +
+  geom_point(size = 2, alpha=0.7) +
+  geom_rug(sides = "b", 
+           alpha = 0.7, 
+           position = "jitter", length = unit(0.02, "npc")) +
+  geom_smooth(method = "glm", method.args = list(family = "gaussian"), se=TRUE)+
+  scale_color_viridis(discrete = TRUE, option = "D") +
+  theme_classic() +
+  labs(x ="Distance to nearest road (m)", y = "Cover of invasive species (2016)",
+       color = "Sites")+
+  theme(
+    axis.title.x = element_text(vjust=-0.35),
+    axis.title.y = element_text(vjust=0.35) ,
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    legend.position = c(.95, .95),
+    legend.justification = c("right", "top"),
+    legend.box.just = "right",
+    legend.margin = margin(6, 6, 6, 6),
+    legend.title = element_text(face = "bold"),
+    panel.border = element_rect(colour = "black", fill=NA)
+  )
+
+p4<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=cover_native)) +
+  geom_point(size = 2, alpha=0.7) +
+  geom_rug(sides = "b", 
+           alpha = 0.7, 
+           position = "jitter", length = unit(0.02, "npc")) +
+  geom_smooth(method = "glm", method.args = list(family = "gaussian"), se=TRUE)+
+  scale_color_viridis(discrete = TRUE, option = "D") +
+  theme_classic() +
+  labs(x ="Distance to nearest road (m)", y = "Cover of native species (2016)",
+       color = "Sites")+
+  theme(
+    axis.title.x = element_text(vjust=-0.35),
+    axis.title.y = element_text(vjust=0.35) ,
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    legend.position = c(.95, .95),
+    legend.justification = c("right", "top"),
+    legend.box.just = "right",
+    legend.margin = margin(6, 6, 6, 6),
+    legend.title = element_text(face = "bold"),
+    panel.border = element_rect(colour = "black", fill=NA)
+  )
+
+ggsave(plot = p1,filename="draft_figures/dist_to_roads_v_exotics.png", width=7, height=4)
+
+ggpubr::ggarrange(p1,p2,p3,p4, nrow=2, ncol=2, labels="auto",label.x=0.94, label.y=.98) +
+ggsave(filename="draft_figures/dist_to_roads_v_e_n.png", width=10, height=8)
+
 
 ##END##
 
