@@ -86,6 +86,7 @@ Anova(md0)
 p1<-ggplot(all_scales %>% 
              mutate(invaded = ifelse(invaded=="invaded", 1,0)), 
            aes(x = nspp_native, y=invaded, color = scale)) +
+  geom_point(alpha=0.5)+
   geom_smooth(method = "glm", method.args = list(family = "binomial")) +
   theme_classic() +
   theme(legend.position = c(1,0),
@@ -100,7 +101,7 @@ p1<-ggplot(all_scales %>%
 
 p2<-all_scales %>%
   ggplot(aes(x=nspp_native, y=nspp_exotic, color = scale)) +
-  # geom_point(alpha=0.5) +
+  geom_point() +
   geom_smooth(method = "glm", 
               method.args = list(family = "quasipoisson"),
               show.legend = F) +
@@ -117,6 +118,7 @@ p2<-all_scales %>%
 
 p3<-ggplot(prev_year_div, 
            aes(x = nspp_native, y=invaded, color = scale)) +
+  geom_point(alpha=0.5)+
   geom_smooth(method = "glm", method.args = list(family = "binomial")) +
   theme_classic()+
   theme(legend.position = "none")+
@@ -127,7 +129,8 @@ p3<-ggplot(prev_year_div,
 
 p4<-ggplot(prev_year_div, 
            aes(x = nspp_native, y=next_nspp_exotic, color = scale)) +
-  geom_smooth(method = "glm", method.args = list(family = "poisson")) +
+  geom_point(alpha=0.5)+
+  geom_smooth(method = "glm", method.args = list(family = "quasipoisson")) +
   theme_classic()+
   theme(legend.position = "none")+
   scale_color_colorblind() +
@@ -140,7 +143,7 @@ p4<-ggplot(prev_year_div,
 
 
 panel<- ggarrange(p2,p1,p4,p3, labels="auto", label.x = 0.15) +
-  ggsave("draft_figures/scale_invaded.png", height = 8.5, width =8.5)
+  ggsave("draft_figures/scale_invaded.png", height = 8.5, width =8.5, bg="white")
 
 
 # poisson glm of nspp ==========================================================

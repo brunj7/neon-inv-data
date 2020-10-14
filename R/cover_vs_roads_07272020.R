@@ -233,7 +233,9 @@ dist_allsites <- bind_rows(cover_sf2016onaq, cover_sf2016moab,
 
 coverdist_allsites <- left_join(plot_level, dist_allsites, by = "plotID") %>%
   filter(year == 2016) %>%
-  mutate(site = factor(site, levels = c("ONAQ", "MOAB", "SRER", "JORN")))
+  mutate(site = factor(site, levels = c("ONAQ", "MOAB", "SRER", "JORN")),
+         site_name = factor(lut_sites[site],levels = c("Onaqui", "Moab",
+                            "Santa Rita", "Jornada")))
 
 ###Exploratory data
 
@@ -284,15 +286,16 @@ coef(mdist)
 my.alpha <- 100 # defines how transparent you want the color to be
 
 # the function to make the colors transparent
-pp1<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=nspp_exotic, color = site)) +
+pp1<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=nspp_exotic, color = site_name)) +
   geom_point(size = 2, alpha=0.7) +
   geom_rug(sides = "b", 
            alpha = 0.7, 
            position = "jitter", length = unit(0.02, "npc")) +
-  geom_smooth(method = "glm", method.args = list(family = "poisson"), se=TRUE, aes(color = site))+
+  geom_smooth(method = "glm", method.args = list(family = "poisson"), se=TRUE, aes(color = site_name))+
   scale_color_viridis(discrete = TRUE, option = "D") +
   theme_classic() +
-  labs(x ="Distance to nearest road (m)", y = "Richness of invasive species (2016)",
+  labs(x ="Distance to nearest road (m)",
+       y = "Richness of invasive species (2016)",
        color = "Sites")+
   theme(
     axis.title.x = element_text(vjust=-0.35),
@@ -303,18 +306,20 @@ pp1<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=nspp_exotic, color = site)
     legend.justification = c("right", "top"),
     legend.box.just = "right",
     legend.margin = margin(6, 6, 6, 6),
-    legend.title = element_text(face = "bold"),
+    legend.title = element_blank(),
     panel.border = element_rect(colour = "black", fill=NA)
   ) 
 
 
 
-pp2<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=nspp_native, color = site)) +
+pp2<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=nspp_native, color = site_name)) +
   geom_point(size = 2, alpha=0.7) +
   geom_rug(sides = "b", 
            alpha = 0.7, 
            position = "jitter", length = unit(0.02, "npc")) +
-  geom_smooth(method = "glm", method.args = list(family = "poisson"), se=TRUE, aes(color = site))+
+  geom_smooth(method = "glm", 
+              method.args = list(family = "poisson"), se=TRUE,
+              aes(color = site_name))+
   scale_color_viridis(discrete = TRUE, option = "D") +
   theme_classic() +
   labs(x ="Distance to nearest road (m)", y = "Richness of native species (2016)",
@@ -328,17 +333,17 @@ pp2<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=nspp_native, color = site)
     legend.justification = c("right", "top"),
     legend.box.just = "right",
     legend.margin = margin(6, 6, 6, 6),
-    legend.title = element_text(face = "bold"),
+    legend.title = element_blank(),
     panel.border = element_rect(colour = "black", fill=NA)
   )
 
-pp3<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=cover_exotic, color = site)) +
+pp3<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=cover_exotic, color = site_name)) +
   geom_point(size = 2, alpha=0.7) +
   geom_rug(sides = "b", 
            alpha = 0.7, 
            position = "jitter", length = unit(0.02, "npc")) +
   geom_smooth(method = "glm", method.args = list(family = "poisson"), se=TRUE,
-              aes(color = site))+
+              aes(color = site_name))+
   scale_color_viridis(discrete = TRUE, option = "D") +
   theme_classic() +
   labs(x ="Distance to nearest road (m)", y = "Cover of invasive species (2016)",
@@ -357,13 +362,12 @@ pp3<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=cover_exotic, color = site
     panel.border = element_rect(colour = "black", fill=NA)
   )
 
-pp4<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=cover_native, color = site)) +
+pp4<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=cover_native, color = site_name)) +
   geom_point(size = 2, alpha=0.7) +
   geom_rug(sides = "b", 
            alpha = 0.7, 
            position = "jitter", length = unit(0.02, "npc")) +
-  geom_smooth(method = "glm", method.args = list(family = "poisson"), se=TRUE,
-              aes(color = site))+
+  geom_smooth(method = "glm", method.args = list(family = "poisson"), se=TRUE)+
   # ylim(0,NA)+
   scale_color_viridis(discrete = TRUE, option = "D") +
   theme_classic() +
@@ -386,7 +390,7 @@ pp4<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=cover_native, color = site
 ggsave(plot = pp1,filename = "draft_figures/dist_to_road_nspp_exotic.png", width = 7, height =4)
 
 ggarrange(pp1, pp2, pp3, pp4, common.legend = T)+
-  ggsave("draft_figures/dist_road_by_site_4pan.png",width=7.5, height=7)
+  ggsave("draft_figures/dist_road_by_site_4pan.png",width=7.5, height=7,bg="white")
 
 ##without sitesas random effects##
 
