@@ -4,6 +4,7 @@ library(lme4)
 library(ggpubr)
 library(ggthemes)
 library(car)
+library(ggsci)
 
 # data mongering ===============================================================
 
@@ -86,22 +87,22 @@ Anova(md0)
 p1<-ggplot(all_scales %>% 
              mutate(invaded = ifelse(invaded=="invaded", 1,0)), 
            aes(x = nspp_native, y=invaded, color = scale)) +
-  geom_point(alpha=0.5)+
+  # geom_point(alpha=0.5)+
   geom_smooth(method = "glm", method.args = list(family = "binomial")) +
   theme_classic() +
   theme(legend.position = c(1,0),
         legend.justification = c(1,0))+
-  scale_color_colorblind() +
+  scale_color_viridis_d(option = "B") +
   xlab("Native Species Richness") +
   ylab("P(Invaded)") +
-  ggsave("draft_figures/p_invaded.png")
+  ggsave("draft_figures/p_invaded.png");p1
 
 # glm(nspp_native ~ nspp_exotic*scale, dat=all_scales, family = "quasipoisson") %>% summary()
 # nb_mod<-MASS::glm.nb(nspp_native ~ nspp_exotic*scale, dat=all_scales)
 
 p2<-all_scales %>%
   ggplot(aes(x=nspp_native, y=nspp_exotic, color = scale)) +
-  geom_point() +
+  # geom_point() +
   geom_smooth(method = "glm", 
               method.args = list(family = "quasipoisson"),
               show.legend = F) +
@@ -109,7 +110,7 @@ p2<-all_scales %>%
   ylab("Exotic Species Richness") +
   xlab("Native Species Richness") +
   theme_pubr() +
-  scale_color_colorblind() +
+  scale_color_viridis_d(option = "B") +
   # facet_wrap(~site) +
   theme(legend.position = c(1,1),
         legend.justification = c(1,1)) +
@@ -118,22 +119,22 @@ p2<-all_scales %>%
 
 p3<-ggplot(prev_year_div, 
            aes(x = nspp_native, y=invaded, color = scale)) +
-  geom_point(alpha=0.5)+
+  # geom_point(alpha=0.5)+
   geom_smooth(method = "glm", method.args = list(family = "binomial")) +
   theme_classic()+
   theme(legend.position = "none")+
   #geom_line(aes(y=predict(inv_mod,type="response", re.form=NA)))+
-  scale_color_colorblind() +
+  scale_color_viridis_d(option = "B") +
   xlab("Native species Richness (Uninvaded Sites, Year 1)")+
   ylab("P(Invaded); Year 2")
 
 p4<-ggplot(prev_year_div, 
            aes(x = nspp_native, y=next_nspp_exotic, color = scale)) +
-  geom_point(alpha=0.5)+
+  # geom_point(alpha=0.5)+
   geom_smooth(method = "glm", method.args = list(family = "quasipoisson")) +
   theme_classic()+
   theme(legend.position = "none")+
-  scale_color_colorblind() +
+  scale_color_viridis_d(option = "B") +
   geom_hline(yintercept = 1, lty=2, color = "grey80")+
   scale_y_continuous(breaks = c(0,1,2,4,6,8))+
   xlab("Native Species Richness (Uninvaded Sites, Year 1)")+
