@@ -138,7 +138,7 @@ rbind(dplyr::select(df_sh,date, smooth_gcc_90)%>% mutate(veg="Shrubs"),
   theme(legend.title = element_blank(),
         legend.position = c(1,1),
         legend.justification = c(1,1))+
-  scale_color_manual(values = c("black", "#007DBA","green4")) +
+  scale_color_manual(values = c("black", "#007DBA","#FFC845")) +
   ggsave("draft_figures/gcc_threshold.png")
 
 
@@ -217,15 +217,15 @@ dplyr::select(df_gr, date, smooth_gcc_90)%>%
   ggplot(aes(x=date, y=smooth_gcc_90,
              color=var)) + 
   geom_bar(data = lvs_p, aes(x=date,y=Proportion_Yes_Records),
-           stat="identity") +
+           stat="identity", fill = "#FFC845") +
   geom_line(key_glyph = "rect") +
   scale_y_continuous("GCC Cheatgrass (Standardized)", 
                      sec.axis = dup_axis(name = "Proportion Yes Records"))+
   theme_classic() +
   theme(legend.title = element_blank(),
         legend.position = "top")+
-  scale_color_manual(values = c("#007DBA", "grey95")) +
-  ggsave("draft_figures/gcc_leaf_obs.png", height=3, width = 7.5)
+  scale_color_manual(values = c("#007DBA", "transparent")) +
+  ggsave("draft_figures/gcc_leaf_obs.png", height=4, width = 7.5)
 
 
 
