@@ -1,0 +1,232 @@
+---
+title: "ONAQ Cheatgrass Data from NEON"
+author: "K Duffy"
+date: "1/30/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup}
+library(tidyverse)
+
+
+```
+
+## In Situ Phenology Data
+Loading in the in situ phenology data:
+```{r}
+magnitude_phenometrics_data <- read.csv("data/magnitude_phenometrics_data.csv")
+
+leaves=magnitude_phenometrics_data%>%
+  filter(magnitude_phenometrics_data$Phenophase_Description=='Leaves (grasses)')%>%
+  arrange(Start_Date)
+
+```
+
+Example simple plot of the proportion of yes records for leaves on cheatgrass:
+
+```{r plotly}
+library(plotly)
+p3 = plot_ly(
+  legend=TRUE
+)  %>%
+  add_trace(
+  data = leaves,
+  x = ~ Start_Date,
+  y = ~ Proportion_Yes_Records,
+  name = 'ONAQ Cheatgrass Leaves',
+  showlegend = TRUE,
+  type = 'bar')
+  
+p3
+```
+
+```{r ggplot}
+pgg<- leaves %>%
+  mutate(Start_Date = as.Date(Start_Date)) %>%
+  filter(Proportion_Yes_Records >0) %>%
+  ggplot(aes(x=Start_Date, y=Proportion_Yes_Records)) +
+  geom_bar(stat="identity")+
+  scale_x_date(date_breaks = "1 month", date_labels = "%b %Y")+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle =90,vjust = 1, hjust=1)) ;pgg
+
+
+ggsave(plot = pgg, filename = "draft_figures/proportion_yes.png", width=7.5, height =3)
+```
+
+## PhenoCam Data
+
+Load PhenoCam data:
+```{r}
+# load the time series data but replace the csv filename with whatever you downloaded
+df_sh <- read.table("data/NEON.D15.ONAQ.DP1.00042_SH_1001_3day.csv", header = TRUE, sep = ",")
+
+# read in the transition date file
+td_sh <- read.table("data/NEON.D15.ONAQ.DP1.00042_SH_1001_3day_transition_dates.csv",
+                 header = TRUE,
+                 sep = ",")
+#read in the cheatgrass timeseries
+df_gr <- read.table("data/NEON.D15.ONAQ.DP1.00042_GR_1000_3day.csv", header = TRUE, sep = ",")
+
+# read in the transition date file
+td_gr <- read.table("data/NEON.D15.ONAQ.DP1.00042_GR_1000_3day_transition_dates.csv",
+                 header = TRUE,
+                 sep = ",")
+
+
+```
+
+Set transition date thresholds:
+
+```{r}
+spring_sh <- td_sh[td_sh$direction == "rising" & td_sh$gcc_value == "gcc_90",]
+fall_sh <- td_sh[td_sh$direction == "falling" & td_sh$gcc_value == "gcc_90",]
+spring_gr <- td_gr[td_gr$direction == "rising" & td_gr$gcc_value == "gcc_90",]
+fall_gr <- td_gr[td_gr$direction == "falling" & td_gr$gcc_value == "gcc_90",]
+```
+
+Simple plot for PhenoCam data:
+```{r}
+p_sh = plot_ly() %>%
+  add_trace(
+  data = df_sh,
+  x = ~ as.Date(date),
+  y = ~ smooth_gcc_90,
+  name = 'PhenoCam GCC Shrubs',
+  showlegend = TRUE,
+  type = 'scatter',
+  mode = 'line'
+) %>% add_markers(
+  data= fall_gr, 
+  x = ~ as.Date(fall_gr$transition_25, origin = "1970-01-01"),
+  y = ~ fall_gr$threshold_25,
+  type = 'scatter',
+  mode = 'marker',
+  name = '25% Threshold of Greenness')%>%
+  add_trace(
+  data = df_gr,
+  x = ~ as.Date(date),
+  y = ~ smooth_gcc_90,
+  name = 'PhenoCam GCC Cheatgrass',
+  showlegend = TRUE,
+  type = 'scatter',
+  mode = 'line')
+# ) %>% add_markers(
+#   data= fall_gr, 
+#   x = ~ as.Date(fall_gr$transition_25, origin = "1970-01-01"),
+#   y = ~ fall_gr$threshold_25,
+#   type = 'scatter',
+#   mode = 'marker',
+#   name = '25% Threshold of Greenness')
+                
+p_sh
+```
+
+```{r p2_gg}
+
+cols<-c("#FFC845", "#007DBA", "darkgreen")
+rbind(dplyr::select(df_sh,date, smooth_gcc_90)%>% mutate(veg="Shrubs"),
+      dplyr::select(df_gr,date, smooth_gcc_90)%>% mutate(veg="Cheatgrass")) %>%
+  mutate(date = as.Date(date)) %>%
+  ggplot(aes(x=date, y=smooth_gcc_90,color=veg)) +
+  geom_line(key_glyph = "point") +
+  geom_point(data = fall_gr %>% mutate(veg = "25% threshold"), 
+             aes(x=as.Date(transition_25), y=threshold_25))+
+  theme_classic() +
+  theme(legend.title = element_blank(),
+        legend.position = c(1,1),
+        legend.justification = c(1,1))+
+  scale_color_manual(values = c("black", "#007DBA","green4")) +
+  ggsave("draft_figures/gcc_threshold.png")
+
+
+```
+
+Combined plot:
+
+```{r}
+ay <- list(
+  overlaying = "y",
+  side = "right",
+  title = "Proportion Yes Records: NEON TOS",
+  side = "left", 
+  title = "Vegetation Greenness (GCC): PhenoCam"
+)
+# y= list(
+#   overlaying = "y",
+#   side = "left",
+#   title = "PhenoCam GCC")
+
+p4=plot_ly()%>%
+    add_trace(
+  data = df_gr,
+  x = ~ as.Date(date),
+  y = ~ smooth_gcc_90,
+  name = 'PhenoCam',
+  showlegend = TRUE,
+  type = 'scatter',
+  mode = 'line', 
+  xaxis= 'PhenoCam GCC'
+) %>%
+  add_trace(
+  data = leaves,
+  opacity=.5, 
+  x = ~ as.Date(Start_Date),
+  y = ~ smooth(Proportion_Yes_Records),
+  name = 'Leaves (NEON-USA NPN)',
+  showlegend = TRUE,
+  type = 'bar', yaxis = "y2") %>%
+  layout(
+    title = "ONAQ Cheatgrass
+    (PhenoCam & NEON)", yaxis2 = ay,
+    #yaxis=y,
+    xaxis = list(title="Date")
+  )
+p4
+```
+
+
+```{r gg_3}
+lvs_p<- leaves %>%
+  dplyr::select(Start_Date, Proportion_Yes_Records) %>%
+  mutate(date = as.Date(Start_Date),
+         var = "Observed Green Leaves") %>%
+  filter(Proportion_Yes_Records >0) 
+
+range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+
+# ylim.prim <- c(min(df_gr$smooth_gcc_90), max(df_gr$smooth_gcc_90))  
+# ylim.sec <- c(min(lvs_p$Proportion_Yes_Records), max(lvs_p$Proportion_Yes_Records))   
+# 
+# 
+# b <- diff(ylim.prim)/diff(ylim.sec)
+# a <- b*(ylim.prim[1] - ylim.sec[1])
+
+# ggplot(climate, aes(Month, Precip)) +
+#   geom_col() +
+#   geom_line(aes(y = a + Temp*b), color = "red") +
+#   scale_y_continuous("Precipitation", sec.axis = sec_axis(~ (. - a)/b, name = "Temperature")) +
+
+dplyr::select(df_gr, date, smooth_gcc_90)%>% 
+  mutate(var="Cheatgrass GCC",
+         date = as.Date(date),
+         smooth_gcc_90 = range01(smooth_gcc_90)) %>%
+  filter(date < max(lvs_p$date)+30) %>%
+  ggplot(aes(x=date, y=smooth_gcc_90,
+             color=var)) + 
+  geom_bar(data = lvs_p, aes(x=date,y=Proportion_Yes_Records),
+           stat="identity") +
+  geom_line(key_glyph = "rect") +
+  scale_y_continuous("GCC Cheatgrass (Standardized)", 
+                     sec.axis = dup_axis(name = "Proportion Yes Records"))+
+  theme_classic() +
+  theme(legend.title = element_blank(),
+        legend.position = "top")+
+  scale_color_manual(values = c("#007DBA", "grey95")) +
+  ggsave("draft_figures/gcc_leaf_obs.png", height=3, width = 7.5)
+
+
+
+```

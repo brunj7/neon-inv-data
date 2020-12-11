@@ -60,7 +60,7 @@ Ndepnh4 <- read.csv("data/ndep.csv")
 
 soilN<- read.csv(text = getURL("https://raw.githubusercontent.com/brunj7/neon-inv-data/master/Data_merged/soil_cn_periodic_w.csv"))
 # head(soilN)
-sort(soilN$nitrogenPercent)
+# sort(soilN$nitrogenPercent)
 soilN$Year<-format(as.Date(soilN$collectDate, format = "%Y-%m-%d"), "%Y")
 soilN$year <- as.numeric(soilN$Year)
 SN <- soilN %>% group_by(plotID, year) %>%
@@ -69,38 +69,38 @@ SN <- soilN %>% group_by(plotID, year) %>%
 plot_level <- plot_level %>%
   mutate(year = as.numeric(year)) %>%
   left_join(SN, by = c('plotID' = 'plotID', 'year'= 'year'))
-head(plot_level)
+# head(plot_level)
 
 
-ggplot(filter(plot_level, year == "2016"), aes(x=year, y=meanNper))+
-  geom_point()+
-  facet_grid(.~site)
-hist(asin(sqrt(plot_level$cover_exotic)))
+# ggplot(filter(plot_level, year == "2016"), aes(x=year, y=meanNper))+
+#   geom_point()+
+#   facet_grid(.~site)
+# hist(asin(sqrt(plot_level$cover_exotic)))
 
 sub<- filter(plot_level, year == "2016")
 
 mod1<-lm(log(cover_exotic_Poaceae+1)~meanNper*site , data = sub)
-car::Anova(mod1, type = 3)
+# car::Anova(mod1, type = 3)
 
-emtrends(mod1, var = "meanNper")
+# emtrends(mod1, var = "meanNper")
 
-pairs(emtrends(mod1, var = "meanNper", "site"), adjust = "fdr")
+# pairs(emtrends(mod1, var = "meanNper", "site"), adjust = "fdr")
 
 plot_level <- plot_level %>%
   mutate(site_name = factor(lut_sites[site],
                             levels = c("Onaqui", "Moab","Santa Rita",
                                        "Jornada")))
 
-hist(resid(mod1))
+# hist(resid(mod1))
 p1<-ggplot(filter(plot_level, year == "2016"),
        aes(x = meanNper, y = cover_exotic, group = site_name))+
   geom_point(aes(color = site_name))+
   theme_bw() + 
-  facet_wrap(~site_name, scales = "free", nrow=1) +
+  # facet_wrap(~site_name, scales = "free", nrow=1) +
   theme(axis.title.x = element_text(vjust=-0.35),
         axis.title.y = element_text(vjust=0.35) ,
         axis.title = element_text(size = 12),
-        legend.position = "none",
+        legend.position = c(1,1),
         legend.justification = c(1,1),
         legend.title=element_blank(),
         axis.text = element_text(size = 10),
@@ -121,7 +121,7 @@ p1<-ggplot(filter(plot_level, year == "2016"),
   site <- plot_level %>% group_by(site, year) %>%
     summarize(cover_exotic = mean(cover_exotic, na.rm=T))
   
-  head(Ndepnh4)
+  # head(Ndepnh4)
   site_level <- left_join(site, Ndepnh4, by = c('site' = 'seas', 'year'= 'yr'))%>%
   mutate(site = factor(site, 
                           levels = c("ONAQ", "MOAB", "SRER", "JORN")))%>%
@@ -130,11 +130,11 @@ p1<-ggplot(filter(plot_level, year == "2016"),
                                        "Jornada")))
 
 
-hist(log(site_level$cover_exotic+1))
-unique(site_level$year)
+# hist(log(site_level$cover_exotic+1))
+# unique(site_level$year)
 mod1 <- lmerTest::lmer(log(cover_exotic+1)~ site*totalN +(1|year),
                        data = site_level)
-anova(mod1)
+# anova(mod1)
 # no effect on exotic cover of N deposition; small scale matters more.
 
 
@@ -144,12 +144,12 @@ site_level$site <- factor(substr(site_level$site, 1, 4),
 p2<-ggplot(site_level,aes(x = totalN, y = cover_exotic, group = site))+
   geom_point(aes(color = site_name))+
   theme_bw() + 
-  facet_wrap(~site_name, scales = "free", nrow=1) +
+  # facet_wrap(~site_name, scales = "free", nrow=1) +
   theme(  axis.title.x = element_text(vjust=-0.35),
           axis.title.y = element_text(vjust=0.35) ,
           axis.title = element_text(size = 12),
           legend.position = "none",
-          legend.title=element_text(size=11),
+          legend.title=element_blank(),
           axis.text = element_text(size = 10),
           legend.text=element_text(size=9),
           axis.ticks.x=element_blank(),
@@ -166,6 +166,7 @@ p2<-ggplot(site_level,aes(x = totalN, y = cover_exotic, group = site))+
 
                                           
 ggpubr::ggarrange(p1, p2, nrow=2, ncol=1) +
-  ggsave("draft_figures/n_vs_exotics.png", height=5, width=7, bg="white")
+  ggsave("draft_figures/n_vs_exotics.png", 
+         height=5, width=7, bg="white")
 
 # expression('Mean annual Q,  m'^"3"*' s'^"-1")

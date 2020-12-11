@@ -170,7 +170,7 @@ jorn_roads_shp <- st_read(file.path(road_path), layer = '14_R_JORN_Roads') %>%
 #method 1
 cover_sf2016onaq$dist_to_road <- sf::st_nearest_feature(cover_sf2016onaq, 
                                                         onaq_roads_shp)
-length(roads_intonaq)
+# length(roads_intonaq)
 #1484; same as original dataset
 
 # adam here!
@@ -295,7 +295,7 @@ pp1<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=nspp_exotic, color = site_
   scale_color_viridis(discrete = TRUE, option = "D") +
   theme_classic() +
   labs(x ="Distance to Nearest Road (m)",
-       y = "Richness of Exotic Species (2016)",
+       y = "Richness of Non-native Species",
        color = "Sites")+
   theme(
     axis.title.x = element_text(vjust=-0.35),
@@ -349,7 +349,7 @@ pp3<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=cover_exotic, color = site
   scale_color_viridis(discrete = TRUE, option = "D") +
   theme_classic() +
   labs(x ="Distance to Nearest Road (m)", 
-       y = "Cover of Exotic Species (2016)",
+       y = "Cover of Non-native Species",
        color = "Sites")+
   ylim(0, NA)+
   theme(
@@ -394,10 +394,10 @@ pp4<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=cover_native, color = site
 
 ggsave(plot = pp1,filename = "draft_figures/dist_to_road_nspp_exotic.png", width = 7, height =4)
 
-ggarrange(pp1, pp2, pp3, pp4, common.legend = T, labels = "auto", 
-          label.x = 0.91, label.y = 0.95)+
+ggarrange(pp1, pp3, common.legend = T, labels = "auto", 
+          label.x = 0.91, label.y = 0.95, nrow=1)+
   ggsave("draft_figures/dist_road_by_site_4pan.png",
-         width=7.5, height=7,bg="white")
+         width=7.5, height=3.5,bg="white")
 
 ##without sitesas random effects##
 

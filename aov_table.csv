@@ -1,0 +1,13 @@
+response,variable,LR Chisq,P(>Chisq)
+Exotic Richness,Native Richness,77.2,<0.001
+Exotic Richness,Scale,11.6,0.009
+Exotic Richness,Native Richness X Scale,3.7,0.291
+P(Invaded),Native Richness,187.9,<0.001
+P(Invaded),Scale,68.5,<0.001
+P(Invaded),Native Richness X Scale,125.8,<0.001
+Exotic Richness: Year 2,Native Richness,75.2,<0.001
+Exotic Richness: Year 2,Scale,31.2,<0.001
+Exotic Richness: Year 2,Native Richness X Scale,3.7,0.292
+P(Invaded): Year 2,Native Richness,8.6,0.003
+P(Invaded): Year 2,Scale,567.9,<0.001
+P(Invaded): Year 2,Native Richness X Scale,316.8,<0.001

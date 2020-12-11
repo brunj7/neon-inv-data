@@ -14,6 +14,7 @@ library(ggpubr)
 library(ggthemes)
 library(car)
 library(stargazer)
+library(kableExtra)
 
 # data mongering ===============================================================
 
@@ -69,5 +70,60 @@ md0<-prev_year_div%>%
 ```
 
 ```{r results='asis'}
-stargazer(ma0,mb0,mc0,md0, header=F)
+# stargazer(ma0,mb0,mc0,md0, header=F, type="html", out="regression.html")
+```
+
+```{r}
+aovs<- rbind(car::Anova(ma0) %>%
+    as_tibble(rownames = "variable") %>%
+    mutate(response = "P(Invaded)"),
+  car::Anova(mc0) %>%
+    as_tibble(rownames = "variable") %>%
+    mutate(response = "Exotic Richness"),
+  car::Anova(md0) %>%
+    as_tibble(rownames = "variable") %>%
+    mutate(response = "Exotic Richness: Year 2"),
+  car::Anova(mb0) %>%
+    as_tibble(rownames = "variable") %>%
+    mutate(response = "P(Invaded): Year 2"))
+
+index_s <- table(aovs$response) %>% 
+                 as.data.frame() %>% 
+                 arrange(desc(Var1))
+
+index_ss<- index_s$Freq
+names(index_ss) <- index_s$Var1
+
+aovs1<- aovs %>% 
+  mutate(variable = replace(variable, variable == "nspp_native", 
+                            "Native Richness"))%>%
+  mutate(variable = replace(variable, 
+                            variable == "nspp_native:scale", 
+                            "Native Richness X Scale"))%>%
+  mutate(variable = replace(variable, 
+                            variable == "scale", 
+                            "Scale")) %>%
+  mutate(`LR Chisq` = round(`LR Chisq`, 1),
+         `P(>Chisq)` = formatC(`Pr(>Chisq)`, format = "f", digits=3) %>% 
+           as.character %>%
+           replace(.=="0.000", "<0.001"))%>%
+  arrange(desc(response)) %>%
+  mutate(order = factor(response, levels =  c("Exotic Richness","P(Invaded)",
+                                              "Exotic Richness: Year 2",
+                                              "P(Invaded): Year 2"))) %>%
+  arrange(order)%>%
+  dplyr::select(response, variable, "LR Chisq", "P(>Chisq)")
+write_csv(aovs1, "aov_table.csv")
+#   kable(aovs,
+#       booktabs=TRUE,
+#       # linesep=c("","","\\addlinespace"),
+#       # escape=F,
+#       # col.names=c("",
+#       #             "F", "P(>F)","F",
+#       #             "P(>F)","F", "P(>F)"),
+#         caption = "Type II ANOVA results") %>%
+# # add_header_above(c(" " = 1, "Year" = 2, "Invasion Stage" = 2, "Year x Invasion Stage"=2)) %>%
+#   kableExtra::kable_styling(font_size = 8)
+#   #   group_rows(index = index_ss)
+
 ```
