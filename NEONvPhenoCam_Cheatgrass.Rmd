@@ -132,12 +132,17 @@ rbind(dplyr::select(df_sh,date, smooth_gcc_90)%>% mutate(veg="Shrubs"),
   mutate(date = as.Date(date)) %>%
   ggplot(aes(x=date, y=smooth_gcc_90,color=veg)) +
   geom_line(key_glyph = "point") +
-  geom_point(data = fall_gr %>% mutate(veg = "25% threshold"), 
+  geom_point(data = fall_gr %>% mutate(veg = "25% Greenness Threshold\n(senescence)"), 
              aes(x=as.Date(transition_25), y=threshold_25))+
   theme_classic() +
+  ylab("Vegatation Relative Greenness")+
+  xlab("Date") +
+  # scale_x_date(date_breaks = "6 months",
+  #              date_labels = "%B %Y")+
   theme(legend.title = element_blank(),
         legend.position = c(1,1),
-        legend.justification = c(1,1))+
+        legend.justification = c(1,1),
+        legend.background = element_rect(fill="transparent"))+
   scale_color_manual(values = c("black", "#007DBA","#FFC845")) +
   ggsave("draft_figures/gcc_threshold.png")
 
@@ -192,7 +197,7 @@ p4
 lvs_p<- leaves %>%
   dplyr::select(Start_Date, Proportion_Yes_Records) %>%
   mutate(date = as.Date(Start_Date),
-         var = "Observed Green Leaves") %>%
+         var = "PhenoCam") %>%
   filter(Proportion_Yes_Records >0) 
 
 range01 <- function(x){(x-min(x))/(max(x)-min(x))}
@@ -210,7 +215,7 @@ range01 <- function(x){(x-min(x))/(max(x)-min(x))}
 #   scale_y_continuous("Precipitation", sec.axis = sec_axis(~ (. - a)/b, name = "Temperature")) +
 
 dplyr::select(df_gr, date, smooth_gcc_90)%>% 
-  mutate(var="Cheatgrass GCC",
+  mutate(var="NEON TOS",
          date = as.Date(date),
          smooth_gcc_90 = range01(smooth_gcc_90)) %>%
   filter(date < max(lvs_p$date)+30) %>%
@@ -219,8 +224,11 @@ dplyr::select(df_gr, date, smooth_gcc_90)%>%
   geom_bar(data = lvs_p, aes(x=date,y=Proportion_Yes_Records),
            stat="identity", fill = "#FFC845") +
   geom_line(key_glyph = "rect") +
-  scale_y_continuous("GCC Cheatgrass (Standardized)", 
-                     sec.axis = dup_axis(name = "Proportion Yes Records"))+
+  scale_y_continuous("Cheatgrass Relative Greenness (Standardized)", 
+                      sec.axis = dup_axis(name = "Proportion Yes Records"))+
+  scale_x_date(name = "Date",
+               date_breaks = "6 months",
+               date_labels = "%B %Y") +
   theme_classic() +
   theme(legend.title = element_blank(),
         legend.position = "top")+
