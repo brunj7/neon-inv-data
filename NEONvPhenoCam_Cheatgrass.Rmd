@@ -127,6 +127,7 @@ p_sh
 ```{r p2_gg}
 
 cols<-c("#FFC845", "#007DBA", "darkgreen")
+
 rbind(dplyr::select(df_sh,date, smooth_gcc_90)%>% mutate(veg="Shrubs"),
       dplyr::select(df_gr,date, smooth_gcc_90)%>% mutate(veg="Cheatgrass")) %>%
   mutate(date = as.Date(date)) %>%
@@ -144,7 +145,8 @@ rbind(dplyr::select(df_sh,date, smooth_gcc_90)%>% mutate(veg="Shrubs"),
         legend.justification = c(1,1),
         legend.background = element_rect(fill="transparent"))+
   scale_color_manual(values = c("black", "#007DBA","#FFC845")) +
-  ggsave("draft_figures/gcc_threshold.png")
+  ggsave("draft_figures/gcc_threshold.png")+
+  ggsave("final_figures/figure_5_gcc_threshold.pdf")
 
 
 ```
@@ -197,7 +199,7 @@ p4
 lvs_p<- leaves %>%
   dplyr::select(Start_Date, Proportion_Yes_Records) %>%
   mutate(date = as.Date(Start_Date),
-         var = "PhenoCam") %>%
+         var = "NEON TOS") %>%
   filter(Proportion_Yes_Records >0) 
 
 range01 <- function(x){(x-min(x))/(max(x)-min(x))}
@@ -215,7 +217,7 @@ range01 <- function(x){(x-min(x))/(max(x)-min(x))}
 #   scale_y_continuous("Precipitation", sec.axis = sec_axis(~ (. - a)/b, name = "Temperature")) +
 
 dplyr::select(df_gr, date, smooth_gcc_90)%>% 
-  mutate(var="NEON TOS",
+  mutate(var="PhenoCam",
          date = as.Date(date),
          smooth_gcc_90 = range01(smooth_gcc_90)) %>%
   filter(date < max(lvs_p$date)+30) %>%
@@ -232,9 +234,55 @@ dplyr::select(df_gr, date, smooth_gcc_90)%>%
   theme_classic() +
   theme(legend.title = element_blank(),
         legend.position = "top")+
-  scale_color_manual(values = c("#007DBA", "transparent")) +
-  ggsave("draft_figures/gcc_leaf_obs.png", height=4, width = 7.5)
+  scale_color_manual(values = c( "transparent","#007DBA")) +
+  ggsave("draft_figures/gcc_leaf_obs.png", height=4, width = 7.5) +
+  ggsave("final_figures/figure_6_gcc_leaf.pdf", height =4, width=7.5)
 
+
+
+```
+
+```{r}
+lvs_p<- leaves %>%
+  dplyr::select(Start_Date, Proportion_Yes_Records) %>%
+  mutate(date = as.Date(Start_Date),
+         var = "NEON TOS") %>%
+  filter(Proportion_Yes_Records >0) 
+
+range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+
+d<- rbind(dplyr::select(df_sh,date, smooth_gcc_90)%>% mutate(var="PhenoCam: Shrubs"),
+      dplyr::select(df_gr,date, smooth_gcc_90)%>% mutate(var="PhenoCam: Cheatgrass"))
+rmax<-max(d$smooth_gcc_90) %>% round(2)
+rmin<-min(d$smooth_gcc_90) %>% round(2)
+rmed<- round(rmax - ((rmax-rmin)/2), 3)
+d %>% 
+  mutate(date = as.Date(date),
+         smooth_gcc_90 = range01(smooth_gcc_90)) %>%
+  filter(date < max(lvs_p$date)+60) %>%
+  ggplot(aes(x=date, y=smooth_gcc_90,
+             color=var)) + 
+  geom_bar(data = lvs_p, aes(x=date,y=Proportion_Yes_Records),
+           stat="identity", fill = "#FFC845") +
+  geom_line(key_glyph = "rect") +
+  geom_point(data = fall_gr %>%
+               mutate(var = "Cheatgrass 25% Greenness Threshold\n(senescence)"), 
+             aes(x=as.Date(transition_25), y=threshold_25), key_glyph="rect")+
+  scale_y_continuous(name = "PhenoCam Relative Greenness", breaks = c(0,.5,1),labels = c(rmin,rmed, rmax), 
+                     sec.axis = dup_axis(name = "Proportion Yes Records",breaks = c(0,1),labels = c(0,1)))+ 
+  scale_x_date(name = "Date",
+               date_breaks = "6 months",
+               date_labels = "%B %Y") +
+  theme_classic() +
+  theme(legend.title = element_blank(),
+        panel.border = element_rect(fill=NA, size=.75),
+        legend.position =c(0,1),
+        legend.justification = c(0,1),
+        legend.background = element_rect(fill="transparent"),
+        legend.direction = "vertical")+
+  scale_color_manual(values = c("black", NA,"#007DBA", "firebrick")) +
+  ggsave("draft_figures/gcc_leaf_obs7.png", height=4, width = 7.5) +
+  ggsave("final_figures/figure_5_gcc_leaf.pdf", height =4, width=9.5)
 
 
 ```

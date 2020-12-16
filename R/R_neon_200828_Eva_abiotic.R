@@ -13,7 +13,7 @@ library(dplyr)
 library(ggthemes)
 library(viridis) 
 
-source("R/diversity_data_prep.R")
+if(!prepped) source("R/diversity_data_prep.R"); prepped = TRUE
 
 ### Figure of site by grass cover through time- rc is boring so keep with absolute value. 
 # plants <- read.csv(text = getURL("https://raw.githubusercontent.com/brunj7/neon-inv-data/master/data/plot_level_diversity_stuff.csv"))
@@ -23,8 +23,8 @@ source("R/diversity_data_prep.R")
 
 ggplot(plot_level %>%
          mutate(site_name = factor(lut_sites[site],
-                                   levels = c("Onaqui", "Moab","Santa Rita",
-                                              "Jornada"))), aes(x=year, 
+                                   levels = c("Moab","Onaqui",
+                                              "Jornada", "Santa Rita"))), aes(x=year, 
                    y = cover_exotic, group = plotID, color = site_name))+
   geom_line(color="gray", size = .01)+
   geom_point()+
@@ -45,9 +45,10 @@ ggplot(plot_level %>%
         panel.grid.major = element_line(colour = "white"),
         panel.grid.minor = element_blank()  )+
   scale_color_viridis(discrete = TRUE, option = "D")+
-  labs(y= "Exotic Cover (%)", x = "Year")+
+  labs(y= "Non-native Plant Cover (%)", x = "Year")+
   ylim(0,35) +
-  ggsave("draft_figures/exotic_bysite.png", width=7.5, height=5)
+  ggsave("draft_figures/exotic_bysite.png", width=7.5, height=5) +
+  ggsave("final_figures/figure_1_exotic_x_site.pdf", width = 7.5, height =5)
 
 
 
@@ -88,8 +89,7 @@ mod1<-lm(log(cover_exotic_Poaceae+1)~meanNper*site , data = sub)
 
 plot_level <- plot_level %>%
   mutate(site_name = factor(lut_sites[site],
-                            levels = c("Onaqui", "Moab","Santa Rita",
-                                       "Jornada")))
+                            levels = c("Moab","Onaqui","Santa Rita","Jornada")))
 
 # hist(resid(mod1))
 p1<-ggplot(filter(plot_level, year == "2016"),
@@ -114,7 +114,7 @@ p1<-ggplot(filter(plot_level, year == "2016"),
   scale_x_continuous(n.breaks = 4)+
   # ggtitle("2016")+
   scale_color_viridis(discrete = TRUE, option = "D")+
-  labs(x="soil N (%), 2016", y = "Exotic cover (%)")
+  labs(x="soil N (%), 2016", y = "Non-Native cover (%)")
   
 
   
@@ -124,27 +124,23 @@ p1<-ggplot(filter(plot_level, year == "2016"),
   # head(Ndepnh4)
   site_level <- left_join(site, Ndepnh4, by = c('site' = 'seas', 'year'= 'yr'))%>%
   mutate(site = factor(site, 
-                          levels = c("ONAQ", "MOAB", "SRER", "JORN")))%>%
+                          levels =  c("MOAB","ONAQ", "JORN",  "SRER")))%>%
   mutate(site_name = factor(lut_sites[site],
-                            levels = c("Onaqui", "Moab","Santa Rita",
-                                       "Jornada")))
+                            levels = c("Moab","Onaqui",
+                                       "Jornada", "Santa Rita")))
 
 
 # hist(log(site_level$cover_exotic+1))
 # unique(site_level$year)
 mod1 <- lmerTest::lmer(log(cover_exotic+1)~ site*totalN +(1|year),
                        data = site_level)
-# anova(mod1)
-# no effect on exotic cover of N deposition; small scale matters more.
-
 
 site_level$site <- factor(substr(site_level$site, 1, 4),
-                          levels = c("ONAQ", "MOAB", "SRER", "JORN"))
+                          levels = c("MOAB","ONAQ", "JORN",  "SRER"))
 
 p2<-ggplot(site_level,aes(x = totalN, y = cover_exotic, group = site))+
   geom_point(aes(color = site_name))+
   theme_bw() + 
-  # facet_wrap(~site_name, scales = "free", nrow=1) +
   theme(  axis.title.x = element_text(vjust=-0.35),
           axis.title.y = element_text(vjust=0.35) ,
           axis.title = element_text(size = 12),
@@ -159,14 +155,13 @@ p2<-ggplot(site_level,aes(x = totalN, y = cover_exotic, group = site))+
           panel.grid.minor = element_blank()  )+
   geom_smooth(method = "lm", aes(color = site_name), se=F)+
   scale_color_viridis(discrete = TRUE, option = "D")+
-  # scale_color_colorblind()+
-  # ggtitle("2014-2018")+
   labs(x=expression(paste ("N deposition (kg m"^2," y"^-1,")", ", 2014-2018")), 
-       y = "Exotic cover (%)")
+       y = "Non-Native cover (%)")
 
                                           
 ggpubr::ggarrange(p1, p2, nrow=2, ncol=1) +
   ggsave("draft_figures/n_vs_exotics.png", 
-         height=5, width=7, bg="white")
+         height=5, width=7, bg="white") +
+  ggsave("final_figures/figure_4_n.pdf", height=5, width =7, bg = "white" )
 
 # expression('Mean annual Q,  m'^"3"*' s'^"-1")

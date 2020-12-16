@@ -67,7 +67,7 @@ crs1b <- '+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0
 #   group_by(plotID, nativeStatusCode) %>%
 #   summarise(mean = mean(percentCover))
 
-source("R/diversity_data_prep.R")
+if(!exists("prepped")) source("R/diversity_data_prep.R"); prepped<-TRUE
 # 
 # inv<- plot_level %>%
 #   dplyr::select(plotID, cover_exotic, year)
@@ -233,9 +233,9 @@ dist_allsites <- bind_rows(cover_sf2016onaq, cover_sf2016moab,
 
 coverdist_allsites <- left_join(plot_level, dist_allsites, by = "plotID") %>%
   filter(year == 2016) %>%
-  mutate(site = factor(site, levels = c("ONAQ", "MOAB", "SRER", "JORN")),
-         site_name = factor(lut_sites[site],levels = c("Onaqui", "Moab",
-                            "Santa Rita", "Jornada")))
+  mutate(site = factor(site, levels = c("MOAB","ONAQ", "JORN",  "SRER")),
+         site_name = factor(lut_sites[site],levels = c("Moab","Onaqui", "Jornada", 
+                            "Santa Rita")))
 
 ###Exploratory data
 
@@ -295,7 +295,7 @@ pp1<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=nspp_exotic, color = site_
   scale_color_viridis(discrete = TRUE, option = "D") +
   theme_classic() +
   labs(x ="Distance to Nearest Road (m)",
-       y = "Richness of Non-native Species",
+       y = "Richness of Non-Native Species",
        color = "Sites")+
   theme(
     axis.title.x = element_text(vjust=-0.35),
@@ -349,7 +349,7 @@ pp3<-ggplot(coverdist_allsites, aes(x=dist_to_road, y=cover_exotic, color = site
   scale_color_viridis(discrete = TRUE, option = "D") +
   theme_classic() +
   labs(x ="Distance to Nearest Road (m)", 
-       y = "Cover of Non-native Species",
+       y = "Cover of Non-Native Species",
        color = "Sites")+
   ylim(0, NA)+
   theme(
@@ -396,7 +396,9 @@ ggsave(plot = pp1,filename = "draft_figures/dist_to_road_nspp_exotic.png", width
 
 ggarrange(pp1, pp3, common.legend = T, labels = "auto", 
           label.x = 0.91, label.y = 0.95, nrow=1)+
-  ggsave("draft_figures/dist_road_by_site_4pan.png",
+  ggsave("draft_figures/dist_road_by_site_2pan.png",
+         width=7.5, height=3.5,bg="white")+
+  ggsave("final_figures/figure_3_roads.pdf",
          width=7.5, height=3.5,bg="white")
 
 ##without sitesas random effects##

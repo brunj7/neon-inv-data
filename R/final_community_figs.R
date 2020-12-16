@@ -1,10 +1,30 @@
 # final diversity/scale figures and models
-source("R/diversity_data_prep.R")
+if(!exists("prepped")) source("R/diversity_data_prep.R"); prepped =TRUE
 library(lme4)
 library(ggpubr)
 library(ggthemes)
 library(car)
 library(ggsci)
+
+# side note, how many unks
+
+avg_unks <- all_scales %>%
+  group_by(site, year, plotID) %>%
+  dplyr::summarise(percent_unk= nspp_unk / nspp_total * 100) %>%
+  ungroup %>%
+  group_by( site, year) %>%
+  dplyr::summarise(avg_unk = mean(percent_unk, na.rm=T)) %>%
+  ungroup() 
+
+
+range(avg_unks[,3], na.rm=T)
+mean(avg_unks[,3] %>% pull, na.rm=T)
+
+avg_unks %>%
+  pivot_wider(names_from = site, values_from=avg_unk)%>%
+  mutate_if(is.numeric, round) %>%
+  write_csv("data/avg_unks.csv")
+  
 
 # data mongering ===============================================================
 
